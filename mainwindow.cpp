@@ -19,11 +19,11 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
-//    memset(image,0,sizeof(image));
+    memset(image,15,sizeof(image));
 
-//    show_image(image);
+    show_image(image);
 
-//    plot_histogram(image);
+    plot_histogram(image);
 
 //    clock = new QTimer();
 
@@ -61,7 +61,6 @@ void MainWindow::on_actionAbout_triggered()
 }
 
 
-
 //***** Open a *.64 image file *****
 
 void MainWindow::on_actionOpen_triggered()
@@ -69,15 +68,15 @@ void MainWindow::on_actionOpen_triggered()
     int i,j;
 
     // Open file dialog to get the file name
-    QString fileName = QFileDialog::getOpenFileName(this,
+    QString filepath = QFileDialog::getOpenFileName(this,
         tr("Open Image"), ".",
         tr("Image Files (*.64)"));
 
     // Read the .64 text file and convert the characters into image array
-    if(fileName != NULL)
+    if(filepath != NULL)
     {
         ifstream imagefile;
-        imagefile.open(fileName.toStdString());
+        imagefile.open(filepath.toStdString());
 
         if (imagefile.is_open())
         {
@@ -105,10 +104,7 @@ void MainWindow::on_actionOpen_triggered()
 
                   //cout << int(image[i][j]) << ",";  // Use this line to check the data
               }
-
               char a = imagefile.get();  // Discard the end of line character
-              //cout <<  endl;
-
           }
           imagefile.close();
         }
@@ -117,25 +113,39 @@ void MainWindow::on_actionOpen_triggered()
 
         plot_histogram(image);
 
+        QStringList parts = filepath.split("/");
+        QString filename = parts.at(parts.size()-1);
+
+        ui->label_image_title->setText(filename);
+
    }
 }
 
+//============================================================================================
+// Notice: In the program, image resolution of each pixel remains original after calaulations,
+//         while being restricted within 0~255 on showing the image
+//         and within 0~32 on ploting the histogram
+//============================================================================================
 
 //***** show the loaded image file on the screen *****
 
-void MainWindow::show_image(unsigned char image[64][64])
+void MainWindow::show_image(char image[64][64])
 {
     // Set up QImage for displaying it in the QLabel label
 
     QImage img(64, 64, QImage::Format_RGB32);
+    char temp_pixel ;
     for(int i=0;i<64;i++)
     {
         for(int j=0;j<64;j++)
         {
             // Set the pixel value of the QImage
-
             // set resolution of each pixel from 32 to 256
-            img.setPixel(j,i,qRgb(image[i][j]*8,image[i][j]*8,image[i][j]*8));
+
+            if (image[i][j] < 0) temp_pixel = 0;
+            else if (image[i][j] > 31) temp_pixel = 31;
+            else temp_pixel = image[i][j];
+            img.setPixel(j,i,qRgb(temp_pixel*8,temp_pixel*8,temp_pixel*8));
         }
     }
 
@@ -149,17 +159,19 @@ void MainWindow::show_image(unsigned char image[64][64])
 
 //***** creat histogram from loaded image *****
 
-void MainWindow::plot_histogram(unsigned char image[64][64])
+void MainWindow::plot_histogram(char image[64][64])
 {
     // Calculate the histogram of the 64x64 image;
-    // resolution of each pixel is ranging from 0 to 31
+    // resolution of each pixel shown is ranging from 0 to 31
 
     for(int i=0; i<32; i++ ) histogram[i] = 0;	// Initialize the array
     for(int i=0; i<64; i++)
     {
         for(int j=0; j<64; j++)
         {
-            histogram[ image[i][j] ]++;
+            if (image[i][j] > 31) histogram[31]++;
+            else if (image[i][j] < 0) histogram[0]++;
+            else histogram[ image[i][j] ]++;
         }
     }
 
@@ -187,24 +199,23 @@ void MainWindow::plot_histogram(unsigned char image[64][64])
     while(!ui->horizontalLayout->isEmpty())
     {
         // Clear the horizontal layout content if there is any
-//        ui->horizontalLayout->removeItem(ui->horizontalLayout->itemAt(0));
+        ui->horizontalLayout->removeItem(ui->horizontalLayout->itemAt(0));
     }
     ui->horizontalLayout->addWidget(chartView);
 }
 
 
 
-//*****
+//***** add or subtract a value to eack pixel *****
 
-void MainWindow::pixel_value_add(unsigned char image[64][64], int value)
+void MainWindow::pixel_value_add(char image[64][64], int value)
 {
     for(int i=0; i<64; i++)
     {
         for(int j=0; j<64; j++)
         {
             image[i][j] = image[i][j] + value;
-            if (image[i][j] > 31) image[i][j] = 31;
-            //else if (image[i][j] < 0) image[i][j] = 0;
+
         }
     }
     show_image(image);
@@ -212,15 +223,13 @@ void MainWindow::pixel_value_add(unsigned char image[64][64], int value)
     plot_histogram(image);
 }
 
-void MainWindow::pixel_value_product(unsigned char image[64][64], double value)
+void MainWindow::pixel_value_product(char image[64][64], double value)
 {
     for(int i=0; i<64; i++)
     {
         for(int j=0; j<64; j++)
         {
             image[i][j] = image[i][j] * value;
-            if (image[i][j] > 31) image[i][j] = 31;
-            //else if (image[i][j] < 0) image[i][j] = 0;
         }
     }
     show_image(image);
@@ -228,19 +237,19 @@ void MainWindow::pixel_value_product(unsigned char image[64][64], double value)
     plot_histogram(image);
 }
 
-void MainWindow::add_image(unsigned char image[64][64])
+void MainWindow::add_image(char image[64][64])
 {
-    unsigned char image_2[64][64];
+    char image_2[64][64];
     // Open file dialog to get the file name
-    QString fileName_2 = QFileDialog::getOpenFileName(this,
+    QString filepath_2 = QFileDialog::getOpenFileName(this,
         tr("Open Image"), ".",
         tr("Image Files (*.64)"));
 
     // Read the .64 text file and convert the characters into image array
-    if(fileName_2 != NULL)
+    if(filepath_2 != NULL)
     {
         ifstream imagefile_2;
-        imagefile_2.open(fileName_2.toStdString());
+        imagefile_2.open(filepath_2.toStdString());
 
         if (imagefile_2.is_open())
         {
@@ -281,39 +290,137 @@ void MainWindow::add_image(unsigned char image[64][64])
     {
         for(int j=0; j<64; j++)
         {
-            image[i][j] = int(image[i][j] + image_2[i][j])/2;
-            if (image[i][j] > 31) image[i][j] = 31;
-            //else if (image[i][j] < 0) image[i][j] = 0;
+            image[i][j] = (image[i][j] + image_2[i][j])/2 ;
+
         }
     }
 
     show_image(image);
 
     plot_histogram(image);
+
+    QStringList parts = filepath_2.split("/");
+    QString filename_2 = parts.at(parts.size()-1);
+    QString temp = ui->label_image_title->text();
+    temp.append(" + " + filename_2);
+    ui->label_image_title->setText(temp);
 }
 
-void MainWindow::image_reconstruct(unsigned char image[64][64])
+void MainWindow::image_reconstruct(char image[64][64])
 {
+    char temp_image[64][64] ;
+
+    for(int i=0; i<64; i++)
+    {
+        for(int j=0; j<64; j++)
+        {
+            temp_image[i][j] = image[i][j];
+        }
+    }
+
     for(int i=0; i<64; i++)
     {
         for(int j=1; j<64; j++)
         {
-            image[i][j] = image[i][j] - image[i][j-1];
-            if (image[i][j] > 31) image[i][j] = 31;
-            //else if (image[i][j] < 0) image[i][j] = 0;
+            image[i][j] = int(temp_image[i][j] - temp_image[i][j-1]);
+//            for debug
+//            if(i==0&&j<5)
+//            {
+//                qDebug() << int(temp_image[i][j])<<"-"<<int(temp_image[i][j-1])<<"="<<temp_image[i][j] - temp_image[i][j-1]<<"  "<<int(image[i][j]);
+//            }
+
         }
     }
+//    qDebug("separate") ;
+    show_image(image);
+
+    plot_histogram(image);
+
+}
+
+void MainWindow::save_image(char image[64][64])
+{
+
+//     use opencv as double-check
+
+//    cv::Mat src;
+//    src.create(64,64,CV_8UC1);
+//    for(int i=0; i<64;i++)
+//    {
+//        for(int j=0; i<64;i++)
+//        {
+//            src.at<uchar>(i,j) = image[i][j];
+//        }
+//    }
+//    cv::imshow("img",src);
+
+    // Set up QImage for saving file
+
+    char temp_pixel;
+    QImage img(64, 64, QImage::Format_RGB32);
+    for(int i=0;i<64;i++)
+    {
+        for(int j=0;j<64;j++)
+        {
+            // Set the pixel value of the QImage
+            // set resolution of each pixel from 32 to 256
+
+            if (image[i][j] < 0) temp_pixel = 0;
+            else if (image[i][j] > 31) temp_pixel = 31;
+            else temp_pixel = image[i][j];
+            img.setPixel(j,i,qRgb(temp_pixel*8,temp_pixel*8,temp_pixel*8));
+        }
+    }
+
+    QString save_fileName = QFileDialog::getSaveFileName(this,tr("Open Image"), ".",
+                                                    tr("Image Files (*.64 *.png)"));
+//    QString save_path = "test_save.jpg";
+//        qDebug() << save_fileName;
+    img.save(save_fileName);
+
 }
 
 void MainWindow::on_pushButton_add_constant_clicked()
 {
-    int pixel_added = 1;
+    int pixel_added = brightness_factor;
     pixel_value_add(image, pixel_added);
 }
 
+void MainWindow::on_pushButton_subtract_constant_clicked()
+{
+    int pixel_added = -brightness_factor;
+    pixel_value_add(image, pixel_added);
+}
+
+void MainWindow::on_pushButton_multiply_constant_clicked()
+{
+    double multiple_constant = contract_factor;
+    pixel_value_product(image, multiple_constant);
+}
+
+void MainWindow::on_pushButton_devide_constant__clicked()
+{
+    double multiple_constant = 1/contract_factor;
+    pixel_value_product(image, multiple_constant);
+}
 
 
-/******test to open .64 through opencv*******
+void MainWindow::on_pushButton_average_clicked()
+{
+    add_image(image);
+}
+
+void MainWindow::on_pushButton_reconstruct_clicked()
+{
+    image_reconstruct(image);
+}
+
+void MainWindow::on_pushButton_save_file_clicked()
+{
+    save_image(image);
+}
+
+/****** test to open .64 through opencv *******
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
@@ -358,21 +465,12 @@ MainWindow::~MainWindow()
 */
 
 
-
-void MainWindow::on_pushButton_multiply_constant_clicked()
+void MainWindow::on_brightness_factor_valueChanged(int arg1)
 {
-    double multiple_constant = 1.2;
-    pixel_value_product(image, multiple_constant);
+    brightness_factor = arg1;
 }
 
-void MainWindow::on_pushButton_average_clicked()
+void MainWindow::on_contract_factor_valueChanged(double arg1)
 {
-    add_image(image);
+    contract_factor = arg1;
 }
-
-void MainWindow::on_pushButton_reconstruct_clicked()
-{
-    image_reconstruct(image);
-}
-
-

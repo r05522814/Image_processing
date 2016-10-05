@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>810</width>
+    <width>818</width>
     <height>495</height>
    </rect>
   </property>
@@ -17,10 +17,10 @@
    <widget class="QLabel" name="label">
     <property name="geometry">
      <rect>
-      <x>9</x>
-      <y>20</y>
-      <width>411</width>
-      <height>421</height>
+      <x>19</x>
+      <y>30</y>
+      <width>401</width>
+      <height>411</height>
      </rect>
     </property>
     <property name="text">
@@ -31,9 +31,9 @@
     <property name="geometry">
      <rect>
       <x>440</x>
-      <y>20</y>
+      <y>30</y>
       <width>361</width>
-      <height>241</height>
+      <height>231</height>
      </rect>
     </property>
     <layout class="QHBoxLayout" name="horizontalLayout"/>
@@ -41,35 +41,35 @@
    <widget class="QPushButton" name="pushButton_add_constant">
     <property name="geometry">
      <rect>
-      <x>440</x>
+      <x>630</x>
       <y>270</y>
-      <width>359</width>
+      <width>101</width>
       <height>23</height>
      </rect>
     </property>
     <property name="text">
-     <string>add or subtract a constant to each pixel</string>
+     <string>high</string>
     </property>
    </widget>
    <widget class="QPushButton" name="pushButton_multiply_constant">
     <property name="geometry">
      <rect>
-      <x>440</x>
+      <x>630</x>
       <y>300</y>
-      <width>361</width>
+      <width>101</width>
       <height>23</height>
      </rect>
     </property>
     <property name="text">
-     <string>multiply a constant to each pixel</string>
+     <string>high</string>
     </property>
    </widget>
    <widget class="QPushButton" name="pushButton_average">
     <property name="geometry">
      <rect>
-      <x>440</x>
+      <x>520</x>
       <y>330</y>
-      <width>361</width>
+      <width>281</width>
       <height>23</height>
      </rect>
     </property>
@@ -80,14 +80,190 @@
    <widget class="QPushButton" name="pushButton_reconstruct">
     <property name="geometry">
      <rect>
-      <x>440</x>
+      <x>520</x>
       <y>360</y>
-      <width>361</width>
+      <width>281</width>
       <height>23</height>
      </rect>
     </property>
     <property name="text">
-     <string>create new image g(x,y) = f(x,y) - f(x-1,y)</string>
+     <string>create new image g(x,y) = f(x,y) - f(x-1,y)   </string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushButton_save_file">
+    <property name="geometry">
+     <rect>
+      <x>440</x>
+      <y>402</y>
+      <width>81</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>save image</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_2">
+    <property name="geometry">
+     <rect>
+      <x>440</x>
+      <y>270</y>
+      <width>71</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Consolas</family>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string>Brightness</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_3">
+    <property name="geometry">
+     <rect>
+      <x>440</x>
+      <y>300</y>
+      <width>71</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Consolas</family>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string>Contract</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_4">
+    <property name="geometry">
+     <rect>
+      <x>440</x>
+      <y>330</y>
+      <width>71</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Consolas</family>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string>Combine</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_5">
+    <property name="geometry">
+     <rect>
+      <x>440</x>
+      <y>360</y>
+      <width>81</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Consolas</family>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string>Rebuild</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushButton_subtract_constant">
+    <property name="geometry">
+     <rect>
+      <x>520</x>
+      <y>270</y>
+      <width>101</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>low</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushButton_devide_constant_">
+    <property name="geometry">
+     <rect>
+      <x>520</x>
+      <y>300</y>
+      <width>101</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>low</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_image_title">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>10</y>
+      <width>411</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="layoutDirection">
+     <enum>Qt::LeftToRight</enum>
+    </property>
+    <property name="text">
+     <string>Iimage Title</string>
+    </property>
+   </widget>
+   <widget class="QSpinBox" name="brightness_factor">
+    <property name="geometry">
+     <rect>
+      <x>740</x>
+      <y>270</y>
+      <width>61</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="minimum">
+     <number>1</number>
+    </property>
+    <property name="maximum">
+     <number>5</number>
+    </property>
+    <property name="value">
+     <number>1</number>
+    </property>
+   </widget>
+   <widget class="QDoubleSpinBox" name="contract_factor">
+    <property name="geometry">
+     <rect>
+      <x>740</x>
+      <y>300</y>
+      <width>62</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="minimum">
+     <double>1.050000000000000</double>
+    </property>
+    <property name="maximum">
+     <double>1.500000000000000</double>
+    </property>
+    <property name="singleStep">
+     <double>0.050000000000000</double>
+    </property>
+    <property name="value">
+     <double>1.100000000000000</double>
     </property>
    </widget>
   </widget>
@@ -96,7 +272,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>810</width>
+     <width>818</width>
      <height>21</height>
     </rect>
    </property>
