@@ -38,7 +38,10 @@ public:
     QDialog aboutbox;
 
     char image[64][64] ;  // Array to store a 64x64 image
-    int histogram[32];            // Array to store the histogram of the 64x64 image (32 gray scales)
+    int histogram[256];            // Array to store the histogram of the 64x64 image (32 gray scales)
+    cv::Mat src;
+    cv::Mat gray_src;
+    int src_row, src_column;
 
     unsigned int brightness_factor = 1;  // assign initial brightness-adjusting-factor ,ranging 1~5
     double contract_factor = 1.1;  // assign initial contract-adjusting-factor ,ranging 1.1~1.5
@@ -53,8 +56,10 @@ private slots:
     void on_actionAbout_triggered();
 
     void show_image(char image[64][64]);
+    void show_image(cv::Mat input);
 
     void plot_histogram(char image[64][64]);
+    void plot_histogram(cv::Mat src);
 
     void pixel_value_add(char image[64][64], int value);
 
@@ -65,6 +70,8 @@ private slots:
     void image_reconstruct(char image[64][64]);
 
     void save_image(char image[64][64]);
+
+    void RGB2GRAY_A(cv::Mat src);
 
     void on_pushButton_add_constant_clicked();
 

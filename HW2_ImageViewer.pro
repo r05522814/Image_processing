@@ -39,4 +39,12 @@ LIBS += -LC:/opencv_310_mingw32/x86/mingw/lib \
             -lopencv_videostab310 \
             -lopencv_core310 \
             -lopencv_highgui310 \
+            -lopencv_ml310 \
+            -lopencv_shape310 \
+            -lopencv_videoio310 \
+            -lopencv_features2d310 \
+            -lopencv_imgcodecs310 \
+            -lopencv_objdetect310 \
+            -lopencv_stitching310 \
+            -lopencv_video310
 
