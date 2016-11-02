@@ -37,20 +37,30 @@ public:
 
     QDialog aboutbox;
 
-    char image[64][64] ;  // Array to store a 64x64 image
-    int histogram[256];            // Array to store the histogram of the 64x64 image (32 gray scales)
+    int histogram[256];            // Array to store the histogram of the image (32 gray scales)
     cv::Mat src;
     cv::Mat gray_src;
+    cv::Mat output_1_image;
+    cv::Mat output_2_image;
+    cv::Mat output_3_image;
+
+    double mask_3[3][3];
+    double mask_5[5][5];
     int src_row, src_column;
     int threshold_value = 128;
     int mode = 0;  // 0 represent rgb888 ; 1 represent gray scale
+    int mask_mode = 0 ; // 0 represent 3*3 mask ; 1 represent 5*5 mask
     int grayscale_shrink_factor =  1;
     bool resize_image_to_label = false ;
+    double mean_and_sigma_square[2]={0};
+    double MH_diff_rate = 0.00012;   // when judging difference of two sides of zero crossing
+    double MH_rate = 0.001;
 
     unsigned int brightness_factor = 10;  // assign initial brightness-adjusting-factor ,ranging 1~5
     double contrast_factor = 1.1;  // assign initial contrast-adjusting-factor ,ranging 1.1~1.5
 
-    QTimer *clock;
+    int label_output_index = 0;
+    //QTimer *clock;
 
 private slots:
     void on_actionExit_triggered();
@@ -59,31 +69,22 @@ private slots:
 
     void on_actionAbout_triggered();
 
-    void show_image(char image[64][64]);
     void show_image(cv::Mat input);
 
-    void plot_histogram(char image[64][64]);
     void plot_histogram(cv::Mat src);
 
-    void pixel_value_add(char image[64][64], int value);
     void pixel_value_add(cv::Mat input, int value);
 
-    void pixel_value_product(char image[64][64], double value);
     void pixel_value_product(cv::Mat input, double value);
 
-    void add_image(char image[64][64]);
-
-    void image_reconstruct(char image[64][64]);
-
-    void save_image(char image[64][64]);
-    void save_image(cv::Mat input);
+    void save_image(cv::Mat input, QString filename);
 
     void RGB2GRAY_1(cv::Mat src);
     void RGB2GRAY_2(cv::Mat src);
 
     void GRAY2binary(cv::Mat input);
 
-    void Histogram_Equalization(cv::Mat input);
+    cv::Mat Histogram_Equalization(cv::Mat input);
 
     void zoom_in(cv::Mat input, double value);
     cv::Mat spacial_resolution_enlarge(cv::Mat input);
@@ -91,6 +92,10 @@ private slots:
 
     cv::Mat grayscale_levels_enlarge(cv::Mat input);
     cv::Mat grayscale_levels_shrink(cv::Mat input);
+
+    cv::Mat mask_operation(cv::Mat input);
+
+    void calculate_mean_and_sigma_square(cv::Mat input);
 
     void on_pushButton_add_constant_clicked();
 
@@ -127,6 +132,22 @@ private slots:
     void on_pushButton_grayscale_down_clicked();
 
     void on_checkBox_resize_clicked(bool checked);
+
+    void on_comboBox_currentIndexChanged(int index);
+
+    void on_pushButton_mask_operation_clicked();
+
+    void on_MH_diff_rate_valueChanged(double arg1);
+
+    void on_MH_rate_valueChanged(double arg1);
+
+    void on_comboBox_2_currentIndexChanged(int index);
+
+    void on_pushButton_save_output_1_clicked();
+
+    void on_pushButton_save_output_2_clicked();
+
+    void on_pushButton_save_output_3_clicked();
 
 private:
     Ui::MainWindow *ui;
