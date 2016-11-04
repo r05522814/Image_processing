@@ -510,14 +510,15 @@ cv::Mat MainWindow::grayscale_levels_shrink(cv::Mat input)
     return scaled_gray;
 }
 
-
 cv::Mat MainWindow::mask_operation(cv::Mat input)
 {
     cv::Mat temp = cv::Mat(input.rows,input.cols,CV_8UC1,double(0.0));
 
     switch (mask_mode)
     {
-        case 0:   // 3*3 smoothing linear mask
+        case 0:   // 3*3 Identical smoothing linear mask
+        case 4:   // 3*3 Laplacian
+        case 10:  // sharpening laplacian + origin
             for(int i=1;i<input.rows-1; i++)
             {
                 for(int j=1;j<input.cols-1; j++)
@@ -537,7 +538,7 @@ cv::Mat MainWindow::mask_operation(cv::Mat input)
             }
             break;
 
-        case 1:   // 5*5 smoothing linear mask
+        case 1:   // 5*5 Identical smoothing linear mask
         case 3:   // 5*5 guassian filter
             for(int i=2;i<input.rows-2; i++)
             {
@@ -586,27 +587,7 @@ cv::Mat MainWindow::mask_operation(cv::Mat input)
             }
             break;
 
-        case 4:   // 3*3 laplacian
-            for(int i=1;i<input.rows-1; i++)
-            {
-                for(int j=1;j<input.cols-1; j++)
-                {
-                    double new_scale = 0;
-                    for(int p=0;p<3;p++)
-                    {
-                        for(int q=0;q<3;q++)
-                        {
-                            new_scale += mask_3[p][q]*input.at<uchar>(i-1+p,j-1+q);
-                        }
-                    }
-                    if(new_scale>255) new_scale = 255;
-                    else if(new_scale<0) new_scale =0;
-                    temp.at<uchar>(i,j) = cvRound(new_scale);
-                }
-            }
-            break;
-
-        case 5:   // case4: 3*3 Sobel operation ; case5: 3*3 Scharr function
+        case 5:   // case 5: 3*3 Sobel operation ; case 6: 3*3 Scharr function
         case 6:
         {
             int Gx[3][3];
@@ -755,8 +736,6 @@ cv::Mat MainWindow::mask_operation(cv::Mat input)
         }
 
         default:
-
-
             break;
     }
     return temp;
@@ -790,7 +769,140 @@ void MainWindow::calculate_mean_and_sigma_square(cv::Mat input)
 
 }
 
+double MainWindow::SShape(double z,int a,int b,int c)
+{
+    double val;
+    if (z<a)
+        {val=0;}
+    else if (z>=a && z<=b)
+        {val=2*pow(((z-a)/(c-a)),2);}
+    else if (z>b && z<=c)
+        {val=1-2*pow(((z-c)/(c-a)),2);}
+    else
+        {val=1;}
+    return val;
+}
+double MainWindow::BellShape(double z)
+{
+    int b=10;   //width of bell
+    int c=0;    //center of bell
+    double val;
+    if (z<=c)
+       { val=SShape(z,c-b,c-b/2,c);}
+    else if (z>c)
+       { val=1-SShape(z,c,c+b/2,c+b);}
+    return val;
+}
+double MainWindow::SigmaWhite(double z)
+{
+    double val;
+    int a=255;   //end of slope
+    int b=200;   //width of slope
+    if (z<=a && z>=a-b)
+        {val=1-(a-z)/b;}
+    else if (z>a)
+        {val=1;}
+    else
+        {val=0;}
+    return val;
+}
+double MainWindow::SigmaBlack(double z)
+{
+    double val;
+    int a=0;    //end of slope
+    int b=200;  //width of slope
 
+    if (z<=a && z>=a-b)
+        {val=(a-z)/b;}
+    else if (z>a)
+        {val=0;}
+    else
+        {val=1;}
+    return val;
+}
+// use fuzzy set for spatial filtering
+cv::Mat MainWindow::Fuzzy_set_operation(cv::Mat input)
+{
+    cv::Mat temp = cv::Mat(input.rows,input.cols,CV_8UC1,double(0.0));
+    for(int i=1; i<input.rows-1; i++)
+    {
+        for(int j=1; j<input.cols-1; j++)
+        {
+            int src[9];
+            double diff[9];
+            int index = 0;
+            double degree_of_membership[8];
+            double membership_output[8];
+            double output_value;
+            double weighted_sum = 0;
+            double sum = 0;
+            double new_scale = 0;
+
+            for(int p=0;p<3;p++)
+            {
+                for(int q=0;q<3;q++)
+                {
+                    src[index] = input.at<uchar>(i-1+p,j-1+q);
+                    index ++;
+                }
+            }
+            for(int i=0; i<9; i++)
+            {
+                diff[i] = src[i] - src[4];  //calculate difference value of each pixel to the center pixel
+            }
+
+            // according to the rule at p.189, calculate degree of membership of "zero_BellShape" & "White_Sigma"
+            // denote degree of membership of "zero_BellShape" as ZE(d) with respect to input d
+            // denote degree of membership of "White_Sigma" as WH(v) with respect to input v
+            // denote degree of membership of "Black_Sigma" as BL(v) with respect to input v
+            // 1. every judgement include two ZE(d) => for white part ZE(d), choose the smaller one; for black part 1-ZE(d), choose the bigger one;
+            // line => constant value (can use one parameter to store instead of a 255 component array)
+
+            degree_of_membership[0] = min(BellShape(diff[1]), BellShape(diff[5]));
+            degree_of_membership[1] = min(BellShape(diff[5]), BellShape(diff[7]));
+            degree_of_membership[2] = min(BellShape(diff[7]), BellShape(diff[3]));
+            degree_of_membership[3] = min(BellShape(diff[3]), BellShape(diff[1]));
+            degree_of_membership[4] = max(1-BellShape(diff[1]),1-BellShape(diff[5]));
+            degree_of_membership[5] = max(1-BellShape(diff[5]),1-BellShape(diff[7]));
+            degree_of_membership[6] = max(1-BellShape(diff[7]),1-BellShape(diff[3]));
+            degree_of_membership[7] = max(1-BellShape(diff[3]),1-BellShape(diff[1]));
+
+            // 2. ZE(d) compare to WH(v) => choose the smaller one ; 1-ZE(d) compare to BL(v) = choose the smaller one
+            // use "and"(smaller) to choose value of ZE(d)&WH(v);
+            // obtain 8 degree of membership_output;
+
+            // 3. use "or"(biggerer) to choose biggest degree of membership from 8 one;
+
+            for(int i=0; i<256; i++)
+            {
+                membership_output[0] = min(degree_of_membership[0], SigmaWhite(i));
+                membership_output[1] = min(degree_of_membership[1], SigmaWhite(i));
+                membership_output[2] = min(degree_of_membership[2], SigmaWhite(i));
+                membership_output[3] = min(degree_of_membership[3], SigmaWhite(i));
+                membership_output[4] = min(degree_of_membership[4], SigmaBlack(i));
+                membership_output[5] = min(degree_of_membership[5], SigmaBlack(i));
+                membership_output[6] = min(degree_of_membership[6], SigmaBlack(i));
+                membership_output[7] = min(degree_of_membership[7], SigmaBlack(i));
+
+                std::sort(membership_output, membership_output+8);
+                output_value = membership_output[7];   // biggest one
+                // final output value = sum(f(i)*i) / sum(f(i)), where f(i) is output_value
+                weighted_sum = weighted_sum + output_value * i;
+                sum = sum + output_value ;
+            }
+            if(sum == 0) new_scale = 0.0;
+            else
+            {
+                new_scale =  weighted_sum / sum ;
+                if(new_scale>255) new_scale = 255.0;
+                else if(new_scale<0) new_scale =0.0;
+            }
+
+            temp.at<uchar>(i,j) = cvRound(new_scale);
+        }
+    }
+    return temp;
+}
 
 //********** Buttons ************
 void MainWindow::on_pushButton_add_constant_clicked()
@@ -914,7 +1026,7 @@ void MainWindow::on_comboBox_currentIndexChanged(int index)
 {
     switch (index)
     {
-        case 0:  // 3*3 smoothing linear mask
+        case 0:  // 3*3 identical smoothing mask
             mask_mode = 0;
             ui->N11->setText("0.111");
             ui->N12->setText("0.111");
@@ -943,7 +1055,7 @@ void MainWindow::on_comboBox_currentIndexChanged(int index)
             ui->N55->hide();
             break;
 
-        case 1:  // 5*5 smoothing linear mask
+        case 1:  // 5*5 identical smoothing mask
             mask_mode = 1;
             ui->N11->setText("0.04");
             ui->N12->setText("0.04");
@@ -1175,6 +1287,64 @@ void MainWindow::on_comboBox_currentIndexChanged(int index)
             ui->N55->hide();
             break;
 
+        case 9:  // Fuzzy set
+            mask_mode = 9;
+            ui->N11->setText("Fuzzy set");
+            ui->N12->setText("Fuzzy set");
+            ui->N13->setText("Fuzzy set");
+            ui->N14->hide();
+            ui->N15->hide();
+            ui->N21->setText("Fuzzy set");
+            ui->N22->setText("Fuzzy set");
+            ui->N23->setText("Fuzzy set");
+            ui->N24->hide();
+            ui->N25->hide();
+            ui->N31->setText("Fuzzy set");
+            ui->N32->setText("Fuzzy set");
+            ui->N33->setText("Fuzzy set");
+            ui->N34->hide();
+            ui->N35->hide();
+            ui->N41->hide();
+            ui->N42->hide();
+            ui->N43->hide();
+            ui->N44->hide();
+            ui->N45->hide();
+            ui->N51->hide();
+            ui->N52->hide();
+            ui->N53->hide();
+            ui->N54->hide();
+            ui->N55->hide();
+            break;
+
+        case 10:  // sharpen (laplacian + origin)
+            mask_mode = 10;
+            ui->N11->setText("-1");
+            ui->N12->setText("-1");
+            ui->N13->setText("-1");
+            ui->N14->hide();
+            ui->N15->hide();
+            ui->N21->setText("-1");
+            ui->N22->setText("9");
+            ui->N23->setText("-1");
+            ui->N24->hide();
+            ui->N25->hide();
+            ui->N31->setText("-1");
+            ui->N32->setText("-1");
+            ui->N33->setText("-1");
+            ui->N34->hide();
+            ui->N35->hide();
+            ui->N41->hide();
+            ui->N42->hide();
+            ui->N43->hide();
+            ui->N44->hide();
+            ui->N45->hide();
+            ui->N51->hide();
+            ui->N52->hide();
+            ui->N53->hide();
+            ui->N54->hide();
+            ui->N55->hide();
+            break;
+
         default:
             break;
 
@@ -1320,15 +1490,39 @@ void MainWindow::on_pushButton_mask_operation_clicked()
             t_end = clock();
             break;
 
+        case 9:
+            t_start = clock();
+            mask_operation_output = Fuzzy_set_operation(gray_src);
+            output_title += "Fuzzy set for spatial filtering,   ";
+            t_end = clock();
+            break;
+
+        case 10:
+            t_start = clock();
+            mask_3[0][0] = ui->N11->text().toDouble();
+            mask_3[0][1] = ui->N12->text().toDouble();
+            mask_3[0][2] = ui->N13->text().toDouble();
+            mask_3[1][0] = ui->N21->text().toDouble();
+            mask_3[1][1] = ui->N22->text().toDouble();
+            mask_3[1][2] = ui->N23->text().toDouble();
+            mask_3[2][0] = ui->N31->text().toDouble();
+            mask_3[2][1] = ui->N32->text().toDouble();
+            mask_3[2][2] = ui->N33->text().toDouble();
+            mask_operation_output = mask_operation(gray_src);
+            output_title += "sharpening with laplacian,   ";
+            t_end = clock();
+            break;
+
         default:
             break;
     }
 
     output_title += "run time = ";
     output_title += QString::number(t_end-t_start) +=" (ms)";
+
+    plot_histogram(mask_operation_output);
+
     QImage img;
-
-
     img = QImage((const unsigned char*) (mask_operation_output.data),
                         mask_operation_output.cols, mask_operation_output.rows, mask_operation_output.step, QImage::Format_Grayscale8);
     if(label_output_index == 0)

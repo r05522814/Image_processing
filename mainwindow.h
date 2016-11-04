@@ -95,18 +95,20 @@ private slots:
 
     cv::Mat mask_operation(cv::Mat input);
 
+    double SShape(double z,int a,int b,int c);
+    double BellShape(double z);
+    double SigmaWhite(double z);
+    double SigmaBlack(double z);
+    cv::Mat Fuzzy_set_operation(cv::Mat input);
+
     void calculate_mean_and_sigma_square(cv::Mat input);
 
     void on_pushButton_add_constant_clicked();
-
     void on_pushButton_subtract_constant_clicked();
-
     void on_brightness_factor_valueChanged(int arg1);
 
     void on_pushButton_multiply_constant_clicked();
-
     void on_pushButton_devide_constant__clicked();
-
     void on_contrast_factor_valueChanged(double arg1);
 
     void on_pushButton_histogram_equ_clicked();
@@ -114,21 +116,15 @@ private slots:
     void on_pushButton_save_file_clicked();
 
     void on_pushButton_RGBtoGRAY_1_clicked();
-
     void on_pushButton_RGBtoGRAY_2_clicked();
-
     void on_pushButton_original_clicked();
-
     void on_pushButton_GRAY2binary_clicked();
-
     void on_threshold_value_valueChanged(int arg1);
 
     void on_pushButton_zoom_in_clicked();
-
     void on_pushButton_zoom_out_clicked();
 
     void on_pushButton_grayscale_up_clicked();
-
     void on_pushButton_grayscale_down_clicked();
 
     void on_checkBox_resize_clicked(bool checked);
