@@ -30,9 +30,9 @@
    <widget class="QWidget" name="horizontalLayoutWidget">
     <property name="geometry">
      <rect>
-      <x>280</x>
+      <x>420</x>
       <y>420</y>
-      <width>931</width>
+      <width>791</width>
       <height>181</height>
      </rect>
     </property>
@@ -45,9 +45,9 @@
    <widget class="QPushButton" name="pushButton_add_constant">
     <property name="geometry">
      <rect>
-      <x>480</x>
+      <x>600</x>
       <y>330</y>
-      <width>101</width>
+      <width>71</width>
       <height>23</height>
      </rect>
     </property>
@@ -58,9 +58,9 @@
    <widget class="QPushButton" name="pushButton_multiply_constant">
     <property name="geometry">
      <rect>
-      <x>480</x>
+      <x>600</x>
       <y>360</y>
-      <width>101</width>
+      <width>71</width>
       <height>23</height>
      </rect>
     </property>
@@ -71,9 +71,9 @@
    <widget class="QPushButton" name="pushButton_histogram_equ">
     <property name="geometry">
      <rect>
-      <x>380</x>
+      <x>520</x>
       <y>390</y>
-      <width>271</width>
+      <width>211</width>
       <height>23</height>
      </rect>
     </property>
@@ -84,7 +84,7 @@
    <widget class="QPushButton" name="pushButton_RGBtoGRAY_1">
     <property name="geometry">
      <rect>
-      <x>480</x>
+      <x>620</x>
       <y>270</y>
       <width>171</width>
       <height>23</height>
@@ -97,9 +97,9 @@
    <widget class="QPushButton" name="pushButton_save_file">
     <property name="geometry">
      <rect>
-      <x>900</x>
-      <y>390</y>
-      <width>151</width>
+      <x>1080</x>
+      <y>270</y>
+      <width>131</width>
       <height>21</height>
      </rect>
     </property>
@@ -110,7 +110,7 @@
    <widget class="QLabel" name="label_2">
     <property name="geometry">
      <rect>
-      <x>280</x>
+      <x>420</x>
       <y>330</y>
       <width>71</width>
       <height>21</height>
@@ -130,7 +130,7 @@
    <widget class="QLabel" name="label_3">
     <property name="geometry">
      <rect>
-      <x>280</x>
+      <x>420</x>
       <y>360</y>
       <width>71</width>
       <height>21</height>
@@ -150,7 +150,7 @@
    <widget class="QLabel" name="label_4">
     <property name="geometry">
      <rect>
-      <x>280</x>
+      <x>420</x>
       <y>390</y>
       <width>91</width>
       <height>21</height>
@@ -170,7 +170,7 @@
    <widget class="QLabel" name="label_5">
     <property name="geometry">
      <rect>
-      <x>280</x>
+      <x>420</x>
       <y>270</y>
       <width>81</width>
       <height>21</height>
@@ -190,9 +190,9 @@
    <widget class="QPushButton" name="pushButton_subtract_constant">
     <property name="geometry">
      <rect>
-      <x>370</x>
+      <x>520</x>
       <y>330</y>
-      <width>101</width>
+      <width>71</width>
       <height>23</height>
      </rect>
     </property>
@@ -203,9 +203,9 @@
    <widget class="QPushButton" name="pushButton_devide_constant_">
     <property name="geometry">
      <rect>
-      <x>370</x>
+      <x>520</x>
       <y>360</y>
-      <width>101</width>
+      <width>71</width>
       <height>23</height>
      </rect>
     </property>
@@ -232,9 +232,9 @@
    <widget class="QSpinBox" name="brightness_factor">
     <property name="geometry">
      <rect>
-      <x>590</x>
+      <x>680</x>
       <y>330</y>
-      <width>61</width>
+      <width>51</width>
       <height>22</height>
      </rect>
     </property>
@@ -251,12 +251,12 @@
      <number>10</number>
     </property>
    </widget>
-   <widget class="QDoubleSpinBox" name="contract_factor">
+   <widget class="QDoubleSpinBox" name="contrast_factor">
     <property name="geometry">
      <rect>
-      <x>590</x>
+      <x>680</x>
       <y>360</y>
-      <width>62</width>
+      <width>51</width>
       <height>22</height>
      </rect>
     </property>
@@ -276,7 +276,7 @@
    <widget class="QPushButton" name="pushButton_RGBtoGRAY_2">
     <property name="geometry">
      <rect>
-      <x>660</x>
+      <x>800</x>
       <y>270</y>
       <width>181</width>
       <height>23</height>
@@ -289,7 +289,7 @@
    <widget class="QPushButton" name="pushButton_GRAY2binary">
     <property name="geometry">
      <rect>
-      <x>370</x>
+      <x>510</x>
       <y>300</y>
       <width>151</width>
       <height>23</height>
@@ -302,7 +302,7 @@
    <widget class="QSpinBox" name="threshold_value">
     <property name="geometry">
      <rect>
-      <x>620</x>
+      <x>760</x>
       <y>300</y>
       <width>61</width>
       <height>22</height>
@@ -324,7 +324,7 @@
    <widget class="QLabel" name="label_6">
     <property name="geometry">
      <rect>
-      <x>550</x>
+      <x>690</x>
       <y>300</y>
       <width>71</width>
       <height>21</height>
@@ -344,7 +344,7 @@
    <widget class="QPushButton" name="pushButton_original">
     <property name="geometry">
      <rect>
-      <x>370</x>
+      <x>510</x>
       <y>270</y>
       <width>101</width>
       <height>23</height>
@@ -357,8 +357,8 @@
    <widget class="QLabel" name="label_7">
     <property name="geometry">
      <rect>
-      <x>690</x>
-      <y>330</y>
+      <x>760</x>
+      <y>350</y>
       <width>131</width>
       <height>21</height>
      </rect>
@@ -377,8 +377,8 @@
    <widget class="QLabel" name="label_8">
     <property name="geometry">
      <rect>
-      <x>690</x>
-      <y>360</y>
+      <x>760</x>
+      <y>380</y>
       <width>151</width>
       <height>21</height>
      </rect>
@@ -397,35 +397,35 @@
    <widget class="QPushButton" name="pushButton_zoom_in">
     <property name="geometry">
      <rect>
-      <x>840</x>
-      <y>330</y>
-      <width>101</width>
+      <x>910</x>
+      <y>350</y>
+      <width>71</width>
       <height>23</height>
      </rect>
     </property>
     <property name="text">
-     <string>zoom in (enlarge)</string>
+     <string>enlarge</string>
     </property>
    </widget>
    <widget class="QPushButton" name="pushButton_zoom_out">
     <property name="geometry">
      <rect>
-      <x>950</x>
-      <y>330</y>
-      <width>101</width>
+      <x>990</x>
+      <y>350</y>
+      <width>71</width>
       <height>23</height>
      </rect>
     </property>
     <property name="text">
-     <string>zoom out (shrink)</string>
+     <string>shrink</string>
     </property>
    </widget>
    <widget class="QPushButton" name="pushButton_grayscale_up">
     <property name="geometry">
      <rect>
-      <x>840</x>
-      <y>360</y>
-      <width>101</width>
+      <x>910</x>
+      <y>380</y>
+      <width>71</width>
       <height>23</height>
      </rect>
     </property>
@@ -436,9 +436,9 @@
    <widget class="QPushButton" name="pushButton_grayscale_down">
     <property name="geometry">
      <rect>
-      <x>950</x>
-      <y>360</y>
-      <width>101</width>
+      <x>990</x>
+      <y>380</y>
+      <width>71</width>
       <height>23</height>
      </rect>
     </property>
@@ -449,8 +449,8 @@
    <widget class="QCheckBox" name="checkBox_resize">
     <property name="geometry">
      <rect>
-      <x>880</x>
-      <y>310</y>
+      <x>920</x>
+      <y>330</y>
       <width>151</width>
       <height>16</height>
      </rect>
@@ -485,179 +485,6 @@
      <string/>
     </property>
    </widget>
-   <widget class="QWidget" name="gridLayoutWidget">
-    <property name="geometry">
-     <rect>
-      <x>40</x>
-      <y>310</y>
-      <width>221</width>
-      <height>161</height>
-     </rect>
-    </property>
-    <layout class="QGridLayout" name="gridLayout">
-     <item row="1" column="2">
-      <widget class="QLineEdit" name="N23"/>
-     </item>
-     <item row="2" column="0">
-      <widget class="QLineEdit" name="N31"/>
-     </item>
-     <item row="2" column="3">
-      <widget class="QLineEdit" name="N34"/>
-     </item>
-     <item row="2" column="4">
-      <widget class="QLineEdit" name="N35"/>
-     </item>
-     <item row="3" column="1">
-      <widget class="QLineEdit" name="N42"/>
-     </item>
-     <item row="3" column="0">
-      <widget class="QLineEdit" name="N41"/>
-     </item>
-     <item row="3" column="2">
-      <widget class="QLineEdit" name="N43"/>
-     </item>
-     <item row="3" column="4">
-      <widget class="QLineEdit" name="N45"/>
-     </item>
-     <item row="3" column="3">
-      <widget class="QLineEdit" name="N44"/>
-     </item>
-     <item row="0" column="0">
-      <widget class="QLineEdit" name="N11">
-       <property name="text">
-        <string/>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="1">
-      <widget class="QLineEdit" name="N22"/>
-     </item>
-     <item row="0" column="4">
-      <widget class="QLineEdit" name="N15"/>
-     </item>
-     <item row="0" column="3">
-      <widget class="QLineEdit" name="N14"/>
-     </item>
-     <item row="1" column="0">
-      <widget class="QLineEdit" name="N21"/>
-     </item>
-     <item row="0" column="2">
-      <widget class="QLineEdit" name="N13"/>
-     </item>
-     <item row="0" column="1">
-      <widget class="QLineEdit" name="N12"/>
-     </item>
-     <item row="1" column="3">
-      <widget class="QLineEdit" name="N24"/>
-     </item>
-     <item row="1" column="4">
-      <widget class="QLineEdit" name="N25"/>
-     </item>
-     <item row="2" column="1">
-      <widget class="QLineEdit" name="N32">
-       <property name="text">
-        <string/>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="2">
-      <widget class="QLineEdit" name="N33"/>
-     </item>
-     <item row="4" column="0">
-      <widget class="QLineEdit" name="N51"/>
-     </item>
-     <item row="4" column="1">
-      <widget class="QLineEdit" name="N52"/>
-     </item>
-     <item row="4" column="2">
-      <widget class="QLineEdit" name="N53"/>
-     </item>
-     <item row="4" column="3">
-      <widget class="QLineEdit" name="N54"/>
-     </item>
-     <item row="4" column="4">
-      <widget class="QLineEdit" name="N55"/>
-     </item>
-    </layout>
-   </widget>
-   <widget class="QComboBox" name="comboBox">
-    <property name="geometry">
-     <rect>
-      <x>60</x>
-      <y>280</y>
-      <width>191</width>
-      <height>22</height>
-     </rect>
-    </property>
-    <item>
-     <property name="text">
-      <string>3*3 Identical smoothing mask</string>
-     </property>
-    </item>
-    <item>
-     <property name="text">
-      <string>5*5 Identical smoothing mask</string>
-     </property>
-    </item>
-    <item>
-     <property name="text">
-      <string>3*3 Order-statistics Filters</string>
-     </property>
-    </item>
-    <item>
-     <property name="text">
-      <string>5*5 Guassian filter</string>
-     </property>
-    </item>
-    <item>
-     <property name="text">
-      <string>3*3 Laplacian</string>
-     </property>
-    </item>
-    <item>
-     <property name="text">
-      <string>3*3 Sobel</string>
-     </property>
-    </item>
-    <item>
-     <property name="text">
-      <string>3*3 Scharr</string>
-     </property>
-    </item>
-    <item>
-     <property name="text">
-      <string>Laplacian of guassian (strengthen)</string>
-     </property>
-    </item>
-    <item>
-     <property name="text">
-      <string>Marr-Hildreth edge detection</string>
-     </property>
-    </item>
-    <item>
-     <property name="text">
-      <string>Fuzzy set for spatial filtering</string>
-     </property>
-    </item>
-    <item>
-     <property name="text">
-      <string>Sharpen (laplacian + origin)</string>
-     </property>
-    </item>
-   </widget>
-   <widget class="QPushButton" name="pushButton_mask_operation">
-    <property name="geometry">
-     <rect>
-      <x>160</x>
-      <y>480</y>
-      <width>101</width>
-      <height>23</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Mask operation</string>
-    </property>
-   </widget>
    <widget class="QLabel" name="label_output_1_image_title">
     <property name="geometry">
      <rect>
@@ -672,96 +499,6 @@
     </property>
     <property name="text">
      <string>Output_1</string>
-    </property>
-   </widget>
-   <widget class="QDoubleSpinBox" name="MH_diff_rate">
-    <property name="geometry">
-     <rect>
-      <x>180</x>
-      <y>520</y>
-      <width>81</width>
-      <height>22</height>
-     </rect>
-    </property>
-    <property name="decimals">
-     <number>6</number>
-    </property>
-    <property name="minimum">
-     <double>0.000010000000000</double>
-    </property>
-    <property name="maximum">
-     <double>0.100000000000000</double>
-    </property>
-    <property name="singleStep">
-     <double>0.000005000000000</double>
-    </property>
-    <property name="value">
-     <double>0.000120000000000</double>
-    </property>
-   </widget>
-   <widget class="QDoubleSpinBox" name="MH_rate">
-    <property name="geometry">
-     <rect>
-      <x>180</x>
-      <y>550</y>
-      <width>81</width>
-      <height>22</height>
-     </rect>
-    </property>
-    <property name="decimals">
-     <number>4</number>
-    </property>
-    <property name="minimum">
-     <double>0.000100000000000</double>
-    </property>
-    <property name="maximum">
-     <double>0.100000000000000</double>
-    </property>
-    <property name="singleStep">
-     <double>0.001000000000000</double>
-    </property>
-    <property name="value">
-     <double>0.001000000000000</double>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_9">
-    <property name="geometry">
-     <rect>
-      <x>80</x>
-      <y>520</y>
-      <width>91</width>
-      <height>21</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <family>Consolas</family>
-      <weight>75</weight>
-      <bold>true</bold>
-     </font>
-    </property>
-    <property name="text">
-     <string>MH_diff_rate</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_10">
-    <property name="geometry">
-     <rect>
-      <x>80</x>
-      <y>550</y>
-      <width>91</width>
-      <height>21</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <family>Consolas</family>
-      <weight>75</weight>
-      <bold>true</bold>
-     </font>
-    </property>
-    <property name="text">
-     <string>MH_rate</string>
     </property>
    </widget>
    <widget class="QLabel" name="label_output_2_image_title">
@@ -780,12 +517,12 @@
      <string>Output_2</string>
     </property>
    </widget>
-   <widget class="QComboBox" name="comboBox_2">
+   <widget class="QComboBox" name="comboBox_layers">
     <property name="geometry">
      <rect>
-      <x>40</x>
-      <y>480</y>
-      <width>111</width>
+      <x>130</x>
+      <y>270</y>
+      <width>131</width>
       <height>22</height>
      </rect>
     </property>
@@ -871,6 +608,338 @@
     </property>
     <property name="text">
      <string>save output_3</string>
+    </property>
+   </widget>
+   <widget class="QTabWidget" name="tabWidget">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>300</y>
+      <width>381</width>
+      <height>301</height>
+     </rect>
+    </property>
+    <property name="currentIndex">
+     <number>1</number>
+    </property>
+    <widget class="QWidget" name="tab_spatial">
+     <attribute name="title">
+      <string>Spatial domain</string>
+     </attribute>
+     <widget class="QPushButton" name="pushButton_mask_operation">
+      <property name="geometry">
+       <rect>
+        <x>230</x>
+        <y>10</y>
+        <width>131</width>
+        <height>23</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Mask operation</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_9">
+      <property name="geometry">
+       <rect>
+        <x>70</x>
+        <y>220</y>
+        <width>91</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <family>Consolas</family>
+        <weight>75</weight>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="text">
+       <string>MH_diff_rate</string>
+      </property>
+     </widget>
+     <widget class="QDoubleSpinBox" name="MH_rate">
+      <property name="geometry">
+       <rect>
+        <x>170</x>
+        <y>250</y>
+        <width>81</width>
+        <height>22</height>
+       </rect>
+      </property>
+      <property name="decimals">
+       <number>4</number>
+      </property>
+      <property name="minimum">
+       <double>0.000100000000000</double>
+      </property>
+      <property name="maximum">
+       <double>0.100000000000000</double>
+      </property>
+      <property name="singleStep">
+       <double>0.001000000000000</double>
+      </property>
+      <property name="value">
+       <double>0.001000000000000</double>
+      </property>
+     </widget>
+     <widget class="QComboBox" name="comboBox_mask_category">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>10</y>
+        <width>201</width>
+        <height>22</height>
+       </rect>
+      </property>
+      <item>
+       <property name="text">
+        <string>3*3 Identical smoothing mask</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>5*5 Identical smoothing mask</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>3*3 Order-statistics Filters</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>5*5 Guassian filter</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>3*3 Laplacian</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>3*3 Sobel</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>3*3 Scharr</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Laplacian of guassian (strengthen)</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Marr-Hildreth edge detection</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Fuzzy set for spatial filtering</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Sharpen (laplacian + origin)</string>
+       </property>
+      </item>
+     </widget>
+     <widget class="QLabel" name="label_10">
+      <property name="geometry">
+       <rect>
+        <x>70</x>
+        <y>250</y>
+        <width>91</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <family>Consolas</family>
+        <weight>75</weight>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="text">
+       <string>MH_rate</string>
+      </property>
+     </widget>
+     <widget class="QWidget" name="gridLayoutWidget">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>40</y>
+        <width>351</width>
+        <height>171</height>
+       </rect>
+      </property>
+      <layout class="QGridLayout" name="gridLayout">
+       <item row="2" column="0">
+        <widget class="QLineEdit" name="N31"/>
+       </item>
+       <item row="2" column="3">
+        <widget class="QLineEdit" name="N34"/>
+       </item>
+       <item row="2" column="4">
+        <widget class="QLineEdit" name="N35"/>
+       </item>
+       <item row="1" column="2">
+        <widget class="QLineEdit" name="N23"/>
+       </item>
+       <item row="3" column="4">
+        <widget class="QLineEdit" name="N45"/>
+       </item>
+       <item row="3" column="3">
+        <widget class="QLineEdit" name="N44"/>
+       </item>
+       <item row="3" column="1">
+        <widget class="QLineEdit" name="N42"/>
+       </item>
+       <item row="3" column="0">
+        <widget class="QLineEdit" name="N41"/>
+       </item>
+       <item row="3" column="2">
+        <widget class="QLineEdit" name="N43"/>
+       </item>
+       <item row="1" column="0">
+        <widget class="QLineEdit" name="N21"/>
+       </item>
+       <item row="0" column="0">
+        <widget class="QLineEdit" name="N11">
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="3">
+        <widget class="QLineEdit" name="N14"/>
+       </item>
+       <item row="0" column="4">
+        <widget class="QLineEdit" name="N15"/>
+       </item>
+       <item row="1" column="1">
+        <widget class="QLineEdit" name="N22"/>
+       </item>
+       <item row="2" column="1">
+        <widget class="QLineEdit" name="N32">
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="2">
+        <widget class="QLineEdit" name="N33"/>
+       </item>
+       <item row="0" column="2">
+        <widget class="QLineEdit" name="N13"/>
+       </item>
+       <item row="0" column="1">
+        <widget class="QLineEdit" name="N12"/>
+       </item>
+       <item row="1" column="4">
+        <widget class="QLineEdit" name="N25"/>
+       </item>
+       <item row="1" column="3">
+        <widget class="QLineEdit" name="N24"/>
+       </item>
+       <item row="4" column="0">
+        <widget class="QLineEdit" name="N51"/>
+       </item>
+       <item row="4" column="4">
+        <widget class="QLineEdit" name="N55"/>
+       </item>
+       <item row="4" column="1">
+        <widget class="QLineEdit" name="N52"/>
+       </item>
+       <item row="4" column="2">
+        <widget class="QLineEdit" name="N53"/>
+       </item>
+       <item row="4" column="3">
+        <widget class="QLineEdit" name="N54"/>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QDoubleSpinBox" name="MH_diff_rate">
+      <property name="geometry">
+       <rect>
+        <x>170</x>
+        <y>220</y>
+        <width>81</width>
+        <height>22</height>
+       </rect>
+      </property>
+      <property name="decimals">
+       <number>6</number>
+      </property>
+      <property name="minimum">
+       <double>0.000010000000000</double>
+      </property>
+      <property name="maximum">
+       <double>0.100000000000000</double>
+      </property>
+      <property name="singleStep">
+       <double>0.000005000000000</double>
+      </property>
+      <property name="value">
+       <double>0.000120000000000</double>
+      </property>
+     </widget>
+    </widget>
+    <widget class="QWidget" name="tab_frequency">
+     <attribute name="title">
+      <string>Frequency domain</string>
+     </attribute>
+     <widget class="QPushButton" name="pushButton_DFT">
+      <property name="geometry">
+       <rect>
+        <x>40</x>
+        <y>30</y>
+        <width>121</width>
+        <height>23</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>DFT</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="pushButton_IDFT">
+      <property name="geometry">
+       <rect>
+        <x>40</x>
+        <y>60</y>
+        <width>121</width>
+        <height>23</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>IDFT</string>
+      </property>
+     </widget>
+    </widget>
+   </widget>
+   <widget class="QLabel" name="label_13">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>270</y>
+      <width>91</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Consolas</family>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string>Output layer</string>
     </property>
    </widget>
   </widget>

@@ -44,6 +44,8 @@ public:
     cv::Mat output_2_image;
     cv::Mat output_3_image;
 
+    cv::Mat complexImage;
+
     double mask_3[3][3];
     double mask_5[5][5];
     int src_row, src_column;
@@ -95,13 +97,19 @@ private slots:
 
     cv::Mat mask_operation(cv::Mat input);
 
+    void calculate_mean_and_sigma_square(cv::Mat input);
+
     double SShape(double z,int a,int b,int c);
     double BellShape(double z);
     double SigmaWhite(double z);
     double SigmaBlack(double z);
     cv::Mat Fuzzy_set_operation(cv::Mat input);
 
-    void calculate_mean_and_sigma_square(cv::Mat input);
+    cv::Mat DFT(cv::Mat input); //discrete fourier transform
+
+    cv::Mat enhancement_for_showing_complexImg(cv::Mat input);
+
+    cv::Mat IDFT(cv::Mat input); //discrete fourier transform
 
     void on_pushButton_add_constant_clicked();
     void on_pushButton_subtract_constant_clicked();
@@ -129,7 +137,7 @@ private slots:
 
     void on_checkBox_resize_clicked(bool checked);
 
-    void on_comboBox_currentIndexChanged(int index);
+    void on_comboBox_mask_category_currentIndexChanged(int index);
 
     void on_pushButton_mask_operation_clicked();
 
@@ -137,13 +145,17 @@ private slots:
 
     void on_MH_rate_valueChanged(double arg1);
 
-    void on_comboBox_2_currentIndexChanged(int index);
+    void on_comboBox_layers_currentIndexChanged(int index);
 
     void on_pushButton_save_output_1_clicked();
 
     void on_pushButton_save_output_2_clicked();
 
     void on_pushButton_save_output_3_clicked();
+
+    void on_pushButton_DFT_clicked();
+
+    void on_pushButton_IDFT_clicked();
 
 private:
     Ui::MainWindow *ui;

@@ -4,9 +4,9 @@
 // RGB to gray and show its histogram
 // basic image progressing
 //
-// Date: 2016/11/02
+// Date: 2016/11/12
 //
-// Version: 3.0
+// Version: 4.0
 //
 //**************************************************************************
 
@@ -23,7 +23,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    on_comboBox_currentIndexChanged(0);
+    on_comboBox_mask_category_currentIndexChanged(0);
 
 //    memset(image,25,sizeof(image));
 
@@ -904,6 +904,155 @@ cv::Mat MainWindow::Fuzzy_set_operation(cv::Mat input)
     return temp;
 }
 
+cv::Mat MainWindow::DFT(cv::Mat input)
+{
+    //***** padding image *****
+    // get best size for DFT (to be poewr of 2)
+//    int M = cv::getOptimalDFTSize( input.rows );
+//    int N = cv::getOptimalDFTSize( input.cols );
+    int M = input.rows*2;
+    int N = input.cols*2;
+//    qDebug() <<"row = "<<input.rows<<"=>"<< M <<", cols = "<<input.cols <<"=>"<< N;
+
+    cv::Mat padded, temp, complexImg;
+
+    cv::copyMakeBorder(input, padded, 0, M - input.rows, 0, N - input.cols, cv::BORDER_CONSTANT, cv::Scalar::all(0));
+
+//    qDebug() <<"padded_row = "<<padded.rows<<", padded_cols = "<<padded.cols ;
+//    cv::imshow("padded",padded);
+
+    // DFT needs two channel ,use merge function to combine two 2D matrices into one 2-channel 3D matrix
+    cv::Mat planes[] = {cv::Mat_<float>(padded), cv::Mat::zeros(padded.size(), CV_32F)};
+    cv::merge(planes, 2, complexImg); // merge into one Mat
+
+    //*****discrete fourier transform*****
+    cv::dft(complexImg, complexImg);
+
+    //*****rearrange the quadrants of Fourier image so that the origin is at the image center*****
+//    qDebug() <<"complexImg_row_origin = "<<complexImg.rows<<", complexImg_cols_origin = "<<complexImg.cols ;
+//    complexImg = complexImg(cv::Rect(0, 0, complexImg.cols & -2, complexImg.rows & -2));
+//    qDebug() <<"complexImg_row = "<<complexImg.rows<<", complexImg_cols = "<<complexImg.cols ;
+    int center_x = complexImg.cols/2;
+    int center_y = complexImg.rows/2;
+
+    //seperate complexImg into 4 quadrants
+    cv::Mat q0(complexImg, cv::Rect(0, 0, center_x, center_y));  //left-up part
+    cv::Mat q1(complexImg, cv::Rect(center_x, 0, center_x, center_y));  //right-up part
+    cv::Mat q2(complexImg, cv::Rect(0, center_y, center_x, center_y));  //left-down part
+    cv::Mat q3(complexImg, cv::Rect(center_x, center_y, center_x, center_y));  //right-down part
+
+    // q0 <-> q3; q1 <-> q2
+    q0.copyTo(temp);
+    q3.copyTo(q0);
+    temp.copyTo(q3);
+
+    q1.copyTo(temp);
+    q2.copyTo(q1);
+    temp.copyTo(q2);
+
+    return complexImg;
+}
+
+cv::Mat MainWindow::enhancement_for_showing_complexImg(cv::Mat input) //input complexImg
+{
+
+    cv::Mat output, mag;
+    output.create(input.rows,input.cols,CV_32F);
+
+    cv::Mat planes[] =  {cv::Mat_<float>(input), cv::Mat_<float>(input)};
+    cv::split(input, planes);  // planes[0] is RE part, planes[1] is IM part
+    cv::magnitude(planes[0], planes[1], planes[0]);  //calculate sqrt(Re(DFT(img))^2 + Im(DFT(img))^2); output to planes[0]
+    mag = planes[0];
+    // all elements are positive
+
+    float temp = 0.0, F_MIN, F_MAX;
+    F_MIN = mag.at<float>(0,0);
+    F_MAX = mag.at<float>(0,0);
+    //max and min
+    for (int i=0;i<mag.rows;i++)
+    {
+        for (int j=0;j<mag.cols;j++)
+        {
+            temp = mag.at<float>(i,j);
+            if (temp < F_MIN) F_MIN = temp;
+            else if (temp > F_MAX) F_MAX = temp;
+        }
+    }
+    F_MIN = log(1 + abs(F_MIN));
+    F_MAX = log(1 + abs(F_MAX));
+//    qDebug()<<"F_MIN = "<<F_MIN<<", FMAX = "<<F_MAX;
+    for (int i=0;i<mag.rows;i++)
+    {
+         for (int j=0;j<mag.cols;j++)
+         {
+             output.at<float>(i,j) = 255*(log(1+abs(mag.at<float>(i,j)))-F_MIN)/(F_MAX-F_MIN);
+         }
+    }
+//    cv::normalize(output, output, 0, 1, CV_MINMAX);
+//    cv::imshow("mag",output);
+    return output;
+
+
+    //*****alternative method*****
+    //***** calculate log(1 + sqrt(Re(DFT(img))^2 + Im(DFT(img))^2)) to enhance visualization *****
+/*
+    cv::Mat planes[] =  {cv::Mat_<float>(input), cv::Mat_<float>(input)};
+    cv::split(input, planes);  // planes[0] is RE part, planes[1] is IM part
+    //cv::normalize(planes[0], planes[0], 0, 1, CV_MINMAX);
+    //cv::imshow("RE_without enhancement",planes[0]);
+    //qDebug()<<QString::number(planes[0].at<float>(center_x,center_y-10));
+    cv::magnitude(planes[0], planes[1], planes[0]);  //calculate sqrt(Re(DFT(img))^2 + Im(DFT(img))^2); output to planes[0]
+    cv::Mat mag = planes[0];
+    mag += cv::Scalar::all(1);
+    cv::log(mag, mag);
+    cv::normalize(mag, mag, 0, 1, CV_MINMAX);
+//    cv::imshow("mag",mag);
+
+    //test zone
+//    cv::Mat test_planes[] =  {cv::Mat_<float>(input), cv::Mat_<float>(input)};
+//    cv::split(input, test_planes);
+//    cv::normalize(test_planes[0], test_planes[0], 0, 1, CV_MINMAX);
+//    cv::imshow("input_plane[0]_without enhancement",test_planes[0]);
+
+    return mag;
+*/
+}
+
+cv::Mat MainWindow::IDFT(cv::Mat input)  //input complexImg
+{
+    cv::Mat temp, inverse_img;
+    //inverse_img.create(input.rows, input.cols, CV_32F);
+
+    int center_x = input.cols/2;
+    int center_y = input.rows/2;
+
+    // rearrange the quadrants of Fourier image to the origin form
+
+    cv::Mat q0(input, cv::Rect(0, 0, center_x, center_y));
+    cv::Mat q1(input, cv::Rect(center_x, 0, center_x, center_y));
+    cv::Mat q2(input, cv::Rect(0, center_y, center_x, center_y));
+    cv::Mat q3(input, cv::Rect(center_x, center_y, center_x, center_y));
+
+    q0.copyTo(temp);
+    q3.copyTo(q0);
+    temp.copyTo(q3);
+
+    q1.copyTo(temp);
+    q2.copyTo(q1);
+    temp.copyTo(q2);
+
+    cv::idft(input,inverse_img);  //Inverse Fourier Transform
+
+    cv::Mat planes[] = {cv::Mat_<float>(input), cv::Mat_<float>(input)};
+    cv::split(inverse_img, planes);
+    cv::magnitude(planes[0], planes[1], planes[0]);// planes[0] = magnitude
+    cv::Mat mag(planes[0], cv::Rect(0, 0, center_x, center_y));  // trim the padding part
+
+//    normalize(mag, output, 0, 1, CV_MINMAX,CV_32F);
+//    cv::imshow("IDFT",output);
+    return mag;
+}
+
 //********** Buttons ************
 void MainWindow::on_pushButton_add_constant_clicked()
 {
@@ -1022,7 +1171,7 @@ void MainWindow::on_checkBox_resize_clicked(bool checked)
     resize_image_to_label = checked;
 }
 
-void MainWindow::on_comboBox_currentIndexChanged(int index)
+void MainWindow::on_comboBox_mask_category_currentIndexChanged(int index)
 {
     switch (index)
     {
@@ -1557,18 +1706,18 @@ void MainWindow::on_pushButton_mask_operation_clicked()
 void MainWindow::on_MH_diff_rate_valueChanged(double arg1)
 {
     MH_diff_rate = arg1;
-    on_comboBox_currentIndexChanged(8);
+    on_comboBox_mask_category_currentIndexChanged(8);
     on_pushButton_mask_operation_clicked();
 }
 
 void MainWindow::on_MH_rate_valueChanged(double arg1)
 {
     MH_rate = arg1;
-    on_comboBox_currentIndexChanged(8);
+    on_comboBox_mask_category_currentIndexChanged(8);
     on_pushButton_mask_operation_clicked();
 }
 
-void MainWindow::on_comboBox_2_currentIndexChanged(int index)
+void MainWindow::on_comboBox_layers_currentIndexChanged(int index)
 {
     label_output_index = index;
 }
@@ -1606,4 +1755,106 @@ void MainWindow::on_pushButton_save_output_3_clicked()
     save_filename += mask_name_parts.at(0);
     save_filename += ".jpg";
     save_image(output_3_image, save_filename);
+}
+
+void MainWindow::on_pushButton_DFT_clicked()
+{
+    cv::Mat temp,DFT_output;
+    QString output_title;
+    clock_t t_start, t_end;
+
+    t_start = clock();
+
+    complexImage = DFT(gray_src);
+    temp = enhancement_for_showing_complexImg(complexImage);
+
+    output_title += "Discrete Fourier Transform, ";
+    t_end = clock();
+    output_title += "run time = ";
+    output_title += QString::number(t_end-t_start) +=" (ms)";
+
+    normalize(temp,DFT_output, 0, 255, CV_MINMAX,CV_8UC1);
+    plot_histogram(DFT_output);
+    QImage img;
+    img = QImage((const unsigned char*) (DFT_output.data),
+                        DFT_output.cols, DFT_output.rows, DFT_output.step, QImage::Format_Grayscale8);
+    if(label_output_index == 0)
+    {
+        output_1_image = DFT_output;
+        ui->label_output_1_image_title->setText(output_title);
+        ui->label_output_1->setStyleSheet("QLabel { background-color: rgb(215, 215, 215); border-color: rgb(8, 8, 8); }");
+        ui->label_output_1->setPixmap(QPixmap::fromImage(img));
+        QImage imgResize = img.scaled(ui->label_output_1->width(),ui->label_output_1->height(),Qt::KeepAspectRatio);
+        ui->label_output_1->setPixmap(QPixmap::fromImage(imgResize));
+    }
+    else if (label_output_index == 1)
+    {
+        output_2_image = DFT_output;
+        ui->label_output_2_image_title->setText(output_title);
+        ui->label_output_2->setStyleSheet("QLabel { background-color: rgb(215, 215, 215); border-color: rgb(8, 8, 8); }");
+        ui->label_output_2->setPixmap(QPixmap::fromImage(img));
+        QImage imgResize = img.scaled(ui->label_output_2->width(),ui->label_output_2->height(),Qt::KeepAspectRatio);
+        ui->label_output_2->setPixmap(QPixmap::fromImage(imgResize));
+    }
+    else if (label_output_index == 2)
+    {
+        output_3_image = DFT_output;
+        ui->label_output_3_image_title->setText(output_title);
+        ui->label_output_3->setStyleSheet("QLabel { background-color: rgb(215, 215, 215); border-color: rgb(8, 8, 8); }");
+        ui->label_output_3->setPixmap(QPixmap::fromImage(img));
+        QImage imgResize = img.scaled(ui->label_output_3->width(),ui->label_output_3->height(),Qt::KeepAspectRatio);
+        ui->label_output_3->setPixmap(QPixmap::fromImage(imgResize));
+    }
+}
+
+void MainWindow::on_pushButton_IDFT_clicked()
+{
+    cv::Mat temp,IDFT_output;
+    QString output_title;
+    clock_t t_start, t_end;
+
+    t_start = clock();
+
+    temp = IDFT(complexImage);
+
+//    cv::normalize(temp, temp, 0, 1, CV_MINMAX);
+//    cv::imshow("mag",temp);
+
+    output_title += "Inverse Discrete Fourier Transform, ";
+    t_end = clock();
+    output_title += "run time = ";
+    output_title += QString::number(t_end-t_start) +=" (ms)";
+
+    normalize(temp,IDFT_output, 0, 255, CV_MINMAX,CV_8UC1);
+    plot_histogram(IDFT_output);
+    QImage img;
+    img = QImage((const unsigned char*) (IDFT_output.data),
+                        IDFT_output.cols, IDFT_output.rows, IDFT_output.step, QImage::Format_Grayscale8);
+    if(label_output_index == 0)
+    {
+        output_1_image = IDFT_output;
+        ui->label_output_1_image_title->setText(output_title);
+        ui->label_output_1->setStyleSheet("QLabel { background-color: rgb(215, 215, 215); border-color: rgb(8, 8, 8); }");
+        ui->label_output_1->setPixmap(QPixmap::fromImage(img));
+        QImage imgResize = img.scaled(ui->label_output_1->width(),ui->label_output_1->height(),Qt::KeepAspectRatio);
+        ui->label_output_1->setPixmap(QPixmap::fromImage(imgResize));
+    }
+    else if (label_output_index == 1)
+    {
+        output_2_image = IDFT_output;
+        ui->label_output_2_image_title->setText(output_title);
+        ui->label_output_2->setStyleSheet("QLabel { background-color: rgb(215, 215, 215); border-color: rgb(8, 8, 8); }");
+        ui->label_output_2->setPixmap(QPixmap::fromImage(img));
+        QImage imgResize = img.scaled(ui->label_output_2->width(),ui->label_output_2->height(),Qt::KeepAspectRatio);
+        ui->label_output_2->setPixmap(QPixmap::fromImage(imgResize));
+    }
+    else if (label_output_index == 2)
+    {
+        output_3_image = IDFT_output;
+        ui->label_output_3_image_title->setText(output_title);
+        ui->label_output_3->setStyleSheet("QLabel { background-color: rgb(215, 215, 215); border-color: rgb(8, 8, 8); }");
+        ui->label_output_3->setPixmap(QPixmap::fromImage(img));
+        QImage imgResize = img.scaled(ui->label_output_3->width(),ui->label_output_3->height(),Qt::KeepAspectRatio);
+        ui->label_output_3->setPixmap(QPixmap::fromImage(imgResize));
+    }
 }
