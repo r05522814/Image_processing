@@ -23,7 +23,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    on_comboBox_mask_category_currentIndexChanged(0);
+    on_comboBox_spatial_mask_category_currentIndexChanged(0);
 
 //    memset(image,25,sizeof(image));
 
@@ -62,7 +62,7 @@ void MainWindow::on_actionOpen_triggered()
 
     QString filepath = QFileDialog::getOpenFileName(this,
         tr("Open Image"), ".",
-        tr("Image Files (*.jpg *.png *.bmp)"));
+        tr("Image Files (*.jpg *.png *.bmp *.tif)"));
 
     QStringList parts = filepath.split("/");
     QString filename = parts.at(parts.size()-1);
@@ -75,7 +75,7 @@ void MainWindow::on_actionOpen_triggered()
     {
 
         if(file_form == "jpg" || file_form == "JPG" || file_form == "png"
-                ||file_form == "PNG"|| file_form == "bmp" || file_form == "BMP")
+                ||file_form == "PNG"|| file_form == "bmp" || file_form == "BMP" || file_form == "tif")
         {
             src = cv::imread(filepath.toStdString().data());
             cvtColor(src, src, 4 );  // 4 for original CV_BGR2RGB
@@ -510,11 +510,11 @@ cv::Mat MainWindow::grayscale_levels_shrink(cv::Mat input)
     return scaled_gray;
 }
 
-cv::Mat MainWindow::mask_operation(cv::Mat input)
+cv::Mat MainWindow::spatial_mask_operation(cv::Mat input)
 {
     cv::Mat temp = cv::Mat(input.rows,input.cols,CV_8UC1,double(0.0));
 
-    switch (mask_mode)
+    switch (spatial_mask_mode)
     {
         case 0:   // 3*3 Identical smoothing linear mask
         case 4:   // 3*3 Laplacian
@@ -539,7 +539,8 @@ cv::Mat MainWindow::mask_operation(cv::Mat input)
             break;
 
         case 1:   // 5*5 Identical smoothing linear mask
-        case 3:   // 5*5 guassian filter
+        case 3:   // 5*5 gaussian filter
+        {
             for(int i=2;i<input.rows-2; i++)
             {
                 for(int j=2;j<input.cols-2; j++)
@@ -558,8 +559,9 @@ cv::Mat MainWindow::mask_operation(cv::Mat input)
                 }
             }
             break;
-
+        }
         case 2: // 3*3 Order-statistics Filters
+        {
             int mask_array[9];
             for(int i=1;i<input.rows-1; i++)
             {
@@ -586,13 +588,14 @@ cv::Mat MainWindow::mask_operation(cv::Mat input)
                 }
             }
             break;
+        }
 
         case 5:   // case 5: 3*3 Sobel operation ; case 6: 3*3 Scharr function
         case 6:
         {
             int Gx[3][3];
             int Gy[3][3];
-            if(mask_mode==5) //Sobel mask
+            if(spatial_mask_mode==5) //Sobel mask
             {
                 Gx[0][0]=-1; Gx[0][1]=0; Gx[0][2]=1;
                 Gx[1][0]=-2; Gx[1][1]=0; Gx[1][2]=2;
@@ -602,7 +605,7 @@ cv::Mat MainWindow::mask_operation(cv::Mat input)
                 Gy[1][0]=0; Gy[1][1]=0; Gy[1][2]=0;
                 Gy[2][0]=1; Gy[2][1]=2; Gy[2][2]=1;
             }
-            else if(mask_mode==6) //Scharr mask
+            else if(spatial_mask_mode==6) //Scharr mask
             {
                 Gx[0][0]=-3; Gx[0][1]=0; Gx[0][2]=3;
                 Gx[1][0]=-10; Gx[1][1]=0; Gx[1][2]=10;
@@ -639,18 +642,18 @@ cv::Mat MainWindow::mask_operation(cv::Mat input)
             break;
         }
 
-        case 7:  // Laplace of guassian
+        case 7:  // Laplace of gaussian
         case 8:  // Marr-Hildreth edge detection
         {
-            cv::Mat temp_Gf = cv::Mat(input.rows,input.cols,CV_64FC1,double(0.0));  // after guassian filter
+            cv::Mat temp_Gf = cv::Mat(input.rows,input.cols,CV_64FC1,double(0.0));  // after gaussian filter
             cv::Mat temp_LoG = cv::Mat(input.rows,input.cols,CV_64FC1,double(0.0));
 //            calculate_mean_and_sigma_square(input);
 //            qDebug()<< "mean = "<< QString::number(mean_and_sigma_square[0]);
 //            qDebug()<< "sigma^2 = "<<QString::number(mean_and_sigma_square[1]);
 
-            //***step 1: Guassian filter  G(x,y)*f(x,y)***
+            //***step 1: Gaussian filter  G(x,y)*f(x,y)***
 
-            int guassian_filter[5][5] = {
+            int gaussian_filter[5][5] = {
                 {1,  4,  7,  4, 1,},
                 {4, 16, 26, 16, 4,},
                 {7, 26, 41, 26, 7,},
@@ -667,10 +670,10 @@ cv::Mat MainWindow::mask_operation(cv::Mat input)
                     {
                         for(int q=0;q<5;q++)
                         {
-                            new_scale += guassian_filter[p][q]*input.at<uchar>(i-2+p,j-2+q);
+                            new_scale += gaussian_filter[p][q]*input.at<uchar>(i-2+p,j-2+q);
                         }
                     }
-//                     2D Guassian function
+//                     2D Gaussian function
 //                    double G = exp(-(i*i+j*j)/(2*mean_and_sigma_square[1]));
                     new_scale = new_scale/273.0;
                     if(new_scale>255) new_scale = 255.0;
@@ -696,14 +699,14 @@ cv::Mat MainWindow::mask_operation(cv::Mat input)
                             new_scale += laplacian_mask[p][q]*temp_Gf.at<double>(i-1+p,j-1+q);
                         }
                     }
-                    if(mask_mode==7)
+                    if(spatial_mask_mode==7)
                     {
                         new_scale *= 10;
                         if(new_scale>255) new_scale = 255.0;
                         else if(new_scale<0) new_scale =0.0;
                         temp.at<uchar>(i,j) = cvRound(new_scale);
                     }
-                    else if(mask_mode==8)
+                    else if(spatial_mask_mode==8)
                     {
                         temp_LoG.at<double>(i,j) = new_scale/255.0;  // scale to 0~1
                     }
@@ -713,7 +716,7 @@ cv::Mat MainWindow::mask_operation(cv::Mat input)
 
             // ***step 3: zero crossing and thershold***
 
-            if(mask_mode==8)
+            if(spatial_mask_mode==8)
             {
                 for(int i=1;i<temp_LoG.rows-1; i++)
                 {
@@ -904,7 +907,7 @@ cv::Mat MainWindow::Fuzzy_set_operation(cv::Mat input)
     return temp;
 }
 
-cv::Mat MainWindow::DFT(cv::Mat input)
+cv::Mat MainWindow::DFT(cv::Mat input)  //input image for fourier transform to frequency domain
 {
     //***** padding image *****
     // get best size for DFT (to be poewr of 2)
@@ -932,6 +935,7 @@ cv::Mat MainWindow::DFT(cv::Mat input)
 //    qDebug() <<"complexImg_row_origin = "<<complexImg.rows<<", complexImg_cols_origin = "<<complexImg.cols ;
 //    complexImg = complexImg(cv::Rect(0, 0, complexImg.cols & -2, complexImg.rows & -2));
 //    qDebug() <<"complexImg_row = "<<complexImg.rows<<", complexImg_cols = "<<complexImg.cols ;
+
     int center_x = complexImg.cols/2;
     int center_y = complexImg.rows/2;
 
@@ -961,7 +965,8 @@ cv::Mat MainWindow::enhancement_for_showing_complexImg(cv::Mat input) //input co
 
     cv::Mat planes[] =  {cv::Mat_<float>(input), cv::Mat_<float>(input)};
     cv::split(input, planes);  // planes[0] is RE part, planes[1] is IM part
-    cv::magnitude(planes[0], planes[1], planes[0]);  //calculate sqrt(Re(DFT(img))^2 + Im(DFT(img))^2); output to planes[0]
+    //calculate sqrt(Re(DFT(img))^2 + Im(DFT(img))^2); output to planes[0]
+    cv::magnitude(planes[0], planes[1], planes[0]);
     mag = planes[0];
     // all elements are positive
 
@@ -989,7 +994,7 @@ cv::Mat MainWindow::enhancement_for_showing_complexImg(cv::Mat input) //input co
          }
     }
 //    cv::normalize(output, output, 0, 1, CV_MINMAX);
-//    cv::imshow("mag",output);
+//    cv::imshow("with enhancement",output);
     return output;
 
 
@@ -1018,7 +1023,7 @@ cv::Mat MainWindow::enhancement_for_showing_complexImg(cv::Mat input) //input co
 */
 }
 
-cv::Mat MainWindow::IDFT(cv::Mat input)  //input complexImg
+cv::Mat MainWindow::IDFT(cv::Mat input)  //input complexImg for inverse fourier transform
 {
     cv::Mat temp, inverse_img;
     //inverse_img.create(input.rows, input.cols, CV_32F);
@@ -1027,7 +1032,6 @@ cv::Mat MainWindow::IDFT(cv::Mat input)  //input complexImg
     int center_y = input.rows/2;
 
     // rearrange the quadrants of Fourier image to the origin form
-
     cv::Mat q0(input, cv::Rect(0, 0, center_x, center_y));
     cv::Mat q1(input, cv::Rect(center_x, 0, center_x, center_y));
     cv::Mat q2(input, cv::Rect(0, center_y, center_x, center_y));
@@ -1041,16 +1045,197 @@ cv::Mat MainWindow::IDFT(cv::Mat input)  //input complexImg
     q2.copyTo(q1);
     temp.copyTo(q2);
 
-    cv::idft(input,inverse_img);  //Inverse Fourier Transform
+    cv::idft(input,inverse_img,cv::DFT_SCALE);  //Inverse Fourier Transform
 
     cv::Mat planes[] = {cv::Mat_<float>(input), cv::Mat_<float>(input)};
     cv::split(inverse_img, planes);
     cv::magnitude(planes[0], planes[1], planes[0]);// planes[0] = magnitude
     cv::Mat mag(planes[0], cv::Rect(0, 0, center_x, center_y));  // trim the padding part
 
+//    qDebug()<<"rows = "<<mag.rows<<", cols = "<<mag.cols;
+
 //    normalize(mag, output, 0, 1, CV_MINMAX,CV_32F);
 //    cv::imshow("IDFT",output);
     return mag;
+}
+
+void MainWindow::show_image_on_output_labels(cv::Mat input, QString output_title)
+{
+    cv::Mat output;
+
+    cv::normalize(input,output, 0, 255, CV_MINMAX,CV_8UC1);
+    plot_histogram(output);  // plot histogram
+    QImage img;
+    img = QImage((const unsigned char*) (output.data),
+                        output.cols, output.rows, output.step, QImage::Format_Grayscale8);
+    if(label_output_index == 0)
+    {
+        output_1_image = output;
+        ui->label_output_1_image_title->setText(output_title);
+        ui->label_output_1->setStyleSheet("QLabel { background-color: rgb(215, 215, 215); border-color: rgb(8, 8, 8); }");
+        ui->label_output_1->setPixmap(QPixmap::fromImage(img));
+        QImage imgResize = img.scaled(ui->label_output_1->width(),ui->label_output_1->height(),Qt::KeepAspectRatio);
+        ui->label_output_1->setPixmap(QPixmap::fromImage(imgResize));
+    }
+    else if (label_output_index == 1)
+    {
+        output_2_image = output;
+        ui->label_output_2_image_title->setText(output_title);
+        ui->label_output_2->setStyleSheet("QLabel { background-color: rgb(215, 215, 215); border-color: rgb(8, 8, 8); }");
+        ui->label_output_2->setPixmap(QPixmap::fromImage(img));
+        QImage imgResize = img.scaled(ui->label_output_2->width(),ui->label_output_2->height(),Qt::KeepAspectRatio);
+        ui->label_output_2->setPixmap(QPixmap::fromImage(imgResize));
+    }
+    else if (label_output_index == 2)
+    {
+        output_3_image = output;
+        ui->label_output_3_image_title->setText(output_title);
+        ui->label_output_3->setStyleSheet("QLabel { background-color: rgb(215, 215, 215); border-color: rgb(8, 8, 8); }");
+        ui->label_output_3->setPixmap(QPixmap::fromImage(img));
+        QImage imgResize = img.scaled(ui->label_output_3->width(),ui->label_output_3->height(),Qt::KeepAspectRatio);
+        ui->label_output_3->setPixmap(QPixmap::fromImage(imgResize));
+    }
+}
+
+cv::Mat MainWindow::frequency_mask_operation(cv::Mat input)  // input complexImg
+{
+    cv::Mat output, frequency_mask;
+    frequency_mask.create(input.rows, input.cols, CV_32F);
+    int center_x = input.rows/2;
+    int center_y = input.cols/2;
+
+    double distance;
+    double cutoff_frequency_radius = cutoff_frequency * max(center_x,center_y) / 100.0;  //D_0
+    // cutoff_frequency is percentage
+    // the biggest diameter is set to be the max(cols,rows)
+
+    //calculate mask
+    switch(frequency_mask_mode)
+    {
+        case 0:  //Ideal lowpass filter
+        case 1:  //Ideal highpass filter
+        {
+            for(int i=0; i<input.rows; i++)
+            {
+                for(int j=0;j<input.cols; j++)
+                {
+                    distance = sqrt((i-center_x)*(i-center_x) + (j-center_y)*(j-center_y)); //D(u,v)
+                    if(frequency_mask_mode == 0)  //Ideal lowpass filter
+                    {
+                        if(distance < cutoff_frequency_radius) frequency_mask.at<float>(i,j) = 1;
+                        else frequency_mask.at<float>(i,j) = 0;
+                    }
+                    else  //Ideal highpass filter
+                    {
+                        if(distance < cutoff_frequency_radius) frequency_mask.at<float>(i,j) = 0;
+                        else frequency_mask.at<float>(i,j) = 1;
+                    }
+                }
+            }
+//            cv::imshow("Ideal filter",frequency_mask);
+            break;
+        }
+
+        case 2:  // Butterworth lowpass filter
+        case 3:  // Butterworth highpass filter
+        {
+            for(int i=0; i<input.rows; i++)
+            {
+                for(int j=0;j<input.cols; j++)
+                {
+                    distance = sqrt((i-center_x)*(i-center_x) + (j-center_y)*(j-center_y)); //D(u,v)
+                    if(frequency_mask_mode == 2)  //Butterworth lowpass filter
+                    {
+                        frequency_mask.at<float>(i,j)=(1/(1+pow( (distance/cutoff_frequency_radius) , 2*butterworth_order) ));
+                    }
+                    else  //Butterworth highpass filter
+                    {
+                        frequency_mask.at<float>(i,j)=1-(1/(1+pow( (distance/cutoff_frequency_radius) , 2*butterworth_order)));
+                    }
+                }
+            }
+//            cv::imshow("Butterworth filter",frequency_mask);
+            break;
+        }
+
+        case 4:  // Gaussian lowpass filter
+        case 5:  // Gaussian highpass filter
+        {
+            for(int i=0; i<input.rows; i++)
+            {
+                for(int j=0;j<input.cols; j++)
+                {
+                    distance = sqrt((i-center_x)*(i-center_x) + (j-center_y)*(j-center_y)); //D(u,v)
+                    if(frequency_mask_mode == 4)  //Butterworth lowpass filter
+                    {
+                        frequency_mask.at<float>(i,j) = exp(-pow(distance,2)/(2*pow(cutoff_frequency_radius,2)));
+                    }
+                    else  //Butterworth highpass filter
+                    {
+                        frequency_mask.at<float>(i,j) = 1-exp(-pow(distance,2)/(2*pow(cutoff_frequency_radius,2)));
+                    }
+                }
+            }
+//            cv::imshow("Gaussian filter",frequency_mask);
+            break;
+        }
+
+        case 6:  // Homomorphic filter
+        {
+            double rH = homomorphic_Gamma_H;
+            double rL = homomorphic_Gamma_L;
+
+            // calculating mask H(u,v)
+            for(int i=0; i<input.rows; i++)
+            {
+                for(int j=0;j<input.cols; j++)
+                {
+                    distance = sqrt((i-center_x)*(i-center_x) + (j-center_y)*(j-center_y)); //D(u,v)
+                    frequency_mask.at<float>(i,j) = (rH-rL)*(1-exp(-pow(distance,2)/pow(cutoff_frequency_radius,2))) + rL;
+//                    frequency_mask.at<float>(i,j) = 1;
+//                    if(i==center_x)qDebug()<<frequency_mask.at<float>(i,j);
+                }
+            }
+//            cv::normalize(frequency_mask, frequency_mask, 0, 1, CV_MINMAX);
+//            cv::imshow("Homomorphic filter",frequency_mask);
+            break;
+        }
+
+        default:
+            break;
+    }
+
+    //H(u,v)*F(u,v) mask operation
+    cv::Mat planes[] = {cv::Mat_<float>(input), cv::Mat_<float>(input)};
+    if(frequency_mask_mode == 6)
+    {
+        // do not use the original DFT complexImage(input), pre-processing for complexImg_homomorphic
+        cv::Mat ln_gray_src, complexImg_homomorphic;
+        ln_gray_src.create(gray_src.rows,gray_src.cols,CV_32FC1);
+
+        // 0->1
+        for(int i = 0; i < ln_gray_src.rows; i++)
+        {
+            for(int j = 0 ; j < ln_gray_src.cols; j++)
+            {
+                ln_gray_src.at<float>(i,j) = gray_src.at<uchar>(i,j) + 1.0;
+            }
+        }
+
+        cv::log(ln_gray_src, ln_gray_src);   //cv::log input & output both need to be CV_32F or CV_64F
+
+        complexImg_homomorphic = DFT(ln_gray_src);
+        cv::split(complexImg_homomorphic, planes);
+    }
+    else  //for case 0~5, use the original DFT complexImage(input)
+    {
+        cv::split(input, planes);
+    }
+    planes[0] = frequency_mask.mul(planes[0]);  // .*
+    planes[1] = frequency_mask.mul(planes[1]);  // .*
+    cv::merge(planes, 2, output);
+
+    return output;
 }
 
 //********** Buttons ************
@@ -1171,12 +1356,12 @@ void MainWindow::on_checkBox_resize_clicked(bool checked)
     resize_image_to_label = checked;
 }
 
-void MainWindow::on_comboBox_mask_category_currentIndexChanged(int index)
+void MainWindow::on_comboBox_spatial_mask_category_currentIndexChanged(int index)
 {
     switch (index)
     {
         case 0:  // 3*3 identical smoothing mask
-            mask_mode = 0;
+            spatial_mask_mode = 0;
             ui->N11->setText("0.111");
             ui->N12->setText("0.111");
             ui->N13->setText("0.111");
@@ -1205,7 +1390,7 @@ void MainWindow::on_comboBox_mask_category_currentIndexChanged(int index)
             break;
 
         case 1:  // 5*5 identical smoothing mask
-            mask_mode = 1;
+            spatial_mask_mode = 1;
             ui->N11->setText("0.04");
             ui->N12->setText("0.04");
             ui->N13->setText("0.04");
@@ -1234,7 +1419,7 @@ void MainWindow::on_comboBox_mask_category_currentIndexChanged(int index)
             break;
 
         case 2:  // 3*3 Order-statistics Filters
-            mask_mode = 2;
+            spatial_mask_mode = 2;
             ui->N11->setText("order");
             ui->N12->setText("order");
             ui->N13->setText("order");
@@ -1262,8 +1447,8 @@ void MainWindow::on_comboBox_mask_category_currentIndexChanged(int index)
             ui->N55->hide();
             break;
 
-        case 3:  // 5*5 guassian filter
-            mask_mode = 3;
+        case 3:  // 5*5 gaussian filter
+            spatial_mask_mode = 3;
             ui->N11->setText("0.003663");
             ui->N12->setText("0.014652");
             ui->N13->setText("0.025641");
@@ -1292,7 +1477,7 @@ void MainWindow::on_comboBox_mask_category_currentIndexChanged(int index)
             break;
 
         case 4:  // 3*3 laplacian
-            mask_mode = 4;
+            spatial_mask_mode = 4;
             ui->N11->setText("-1");
             ui->N12->setText("-1");
             ui->N13->setText("-1");
@@ -1321,7 +1506,7 @@ void MainWindow::on_comboBox_mask_category_currentIndexChanged(int index)
             break;
 
         case 5:  // 3*3 sobel
-            mask_mode = 5;
+            spatial_mask_mode = 5;
             ui->N11->setText("sobel");
             ui->N12->setText("sobel");
             ui->N13->setText("sobel");
@@ -1350,7 +1535,7 @@ void MainWindow::on_comboBox_mask_category_currentIndexChanged(int index)
             break;
 
         case 6:  // 3*3 Scharr function
-            mask_mode = 6;
+            spatial_mask_mode = 6;
             ui->N11->setText("Scharr");
             ui->N12->setText("Scharr");
             ui->N13->setText("Scharr");
@@ -1378,8 +1563,8 @@ void MainWindow::on_comboBox_mask_category_currentIndexChanged(int index)
             ui->N55->hide();
             break;
 
-        case 7:  // laplacian of Guassian
-            mask_mode = 7;
+        case 7:  // laplacian of Gaussian
+            spatial_mask_mode = 7;
             ui->N11->setText("LoG");
             ui->N12->setText("LoG");
             ui->N13->setText("LoG");
@@ -1408,7 +1593,7 @@ void MainWindow::on_comboBox_mask_category_currentIndexChanged(int index)
             break;
 
         case 8:  // Marr-Hildreth
-            mask_mode = 8;
+            spatial_mask_mode = 8;
             ui->N11->setText("Marr-Hildreth");
             ui->N12->setText("Marr-Hildreth");
             ui->N13->setText("Marr-Hildreth");
@@ -1437,7 +1622,7 @@ void MainWindow::on_comboBox_mask_category_currentIndexChanged(int index)
             break;
 
         case 9:  // Fuzzy set
-            mask_mode = 9;
+            spatial_mask_mode = 9;
             ui->N11->setText("Fuzzy set");
             ui->N12->setText("Fuzzy set");
             ui->N13->setText("Fuzzy set");
@@ -1466,7 +1651,7 @@ void MainWindow::on_comboBox_mask_category_currentIndexChanged(int index)
             break;
 
         case 10:  // sharpen (laplacian + origin)
-            mask_mode = 10;
+            spatial_mask_mode = 10;
             ui->N11->setText("-1");
             ui->N12->setText("-1");
             ui->N13->setText("-1");
@@ -1500,13 +1685,13 @@ void MainWindow::on_comboBox_mask_category_currentIndexChanged(int index)
     }
 }
 
-void MainWindow::on_pushButton_mask_operation_clicked()
+void MainWindow::on_pushButton_spatial_mask_operation_clicked()
 {
     QString output_title;
     clock_t t_start, t_end;
-    cv::Mat mask_operation_output;
+    cv::Mat spatial_mask_operation_output;
 
-    switch(mask_mode)
+    switch(spatial_mask_mode)
     {
         case 0:
             t_start = clock();
@@ -1519,7 +1704,7 @@ void MainWindow::on_pushButton_mask_operation_clicked()
             mask_3[2][0] = ui->N31->text().toDouble();
             mask_3[2][1] = ui->N32->text().toDouble();
             mask_3[2][2] = ui->N33->text().toDouble();
-            mask_operation_output = mask_operation(gray_src);
+            spatial_mask_operation_output = spatial_mask_operation(gray_src);
             output_title += "3x3 Identical smoothing mask,   ";
             t_end = clock();
             break;
@@ -1551,14 +1736,14 @@ void MainWindow::on_pushButton_mask_operation_clicked()
             mask_5[4][2] = ui->N53->text().toDouble();
             mask_5[4][3] = ui->N54->text().toDouble();
             mask_5[4][4] = ui->N55->text().toDouble();
-            mask_operation_output = mask_operation(gray_src);
+            spatial_mask_operation_output = spatial_mask_operation(gray_src);
             output_title += "5x5 Identical smoothing mask,   ";
             t_end = clock();
             break;
 
         case 2:
             t_start = clock();
-            mask_operation_output = mask_operation(gray_src);
+            spatial_mask_operation_output = spatial_mask_operation(gray_src);
             output_title += "3x3 Order-statistics Filters,   ";
             t_end = clock();
             break;
@@ -1590,8 +1775,8 @@ void MainWindow::on_pushButton_mask_operation_clicked()
             mask_5[4][2] = ui->N53->text().toDouble();
             mask_5[4][3] = ui->N54->text().toDouble();
             mask_5[4][4] = ui->N55->text().toDouble();
-            mask_operation_output = mask_operation(gray_src);
-            output_title += "5x5 Guassian filter,   ";
+            spatial_mask_operation_output = spatial_mask_operation(gray_src);
+            output_title += "5x5 Gaussian filter,   ";
             t_end = clock();
             break;
 
@@ -1606,42 +1791,42 @@ void MainWindow::on_pushButton_mask_operation_clicked()
             mask_3[2][0] = ui->N31->text().toDouble();
             mask_3[2][1] = ui->N32->text().toDouble();
             mask_3[2][2] = ui->N33->text().toDouble();
-            mask_operation_output = mask_operation(gray_src);
+            spatial_mask_operation_output = spatial_mask_operation(gray_src);
             output_title += "3x3 Laplacian,   ";
             t_end = clock();
             break;
 
         case 5:
             t_start = clock();
-            mask_operation_output = mask_operation(gray_src);
+            spatial_mask_operation_output = spatial_mask_operation(gray_src);
             output_title += "3x3 Sobel operation,   ";
             t_end = clock();
             break;
 
         case 6:
             t_start = clock();
-            mask_operation_output = mask_operation(gray_src);
+            spatial_mask_operation_output = spatial_mask_operation(gray_src);
             output_title += "3x3 Scharr function,   ";
             t_end = clock();
             break;
 
         case 7:
             t_start = clock();
-            mask_operation_output = mask_operation(gray_src);
-            output_title += "Laplacian of guassian,   ";
+            spatial_mask_operation_output = spatial_mask_operation(gray_src);
+            output_title += "Laplacian of gaussian,   ";
             t_end = clock();
             break;
 
         case 8:
             t_start = clock();
-            mask_operation_output = mask_operation(gray_src);
+            spatial_mask_operation_output = spatial_mask_operation(gray_src);
             output_title += "Marr-Hildreth edge detection,   ";
             t_end = clock();
             break;
 
         case 9:
             t_start = clock();
-            mask_operation_output = Fuzzy_set_operation(gray_src);
+            spatial_mask_operation_output = Fuzzy_set_operation(gray_src);
             output_title += "Fuzzy set for spatial filtering,   ";
             t_end = clock();
             break;
@@ -1657,7 +1842,7 @@ void MainWindow::on_pushButton_mask_operation_clicked()
             mask_3[2][0] = ui->N31->text().toDouble();
             mask_3[2][1] = ui->N32->text().toDouble();
             mask_3[2][2] = ui->N33->text().toDouble();
-            mask_operation_output = mask_operation(gray_src);
+            spatial_mask_operation_output = spatial_mask_operation(gray_src);
             output_title += "sharpening with laplacian,   ";
             t_end = clock();
             break;
@@ -1669,52 +1854,22 @@ void MainWindow::on_pushButton_mask_operation_clicked()
     output_title += "run time = ";
     output_title += QString::number(t_end-t_start) +=" (ms)";
 
-    plot_histogram(mask_operation_output);
-
-    QImage img;
-    img = QImage((const unsigned char*) (mask_operation_output.data),
-                        mask_operation_output.cols, mask_operation_output.rows, mask_operation_output.step, QImage::Format_Grayscale8);
-    if(label_output_index == 0)
-    {
-        output_1_image = mask_operation_output;
-        ui->label_output_1_image_title->setText(output_title);
-        ui->label_output_1->setStyleSheet("QLabel { background-color: rgb(215, 215, 215); border-color: rgb(8, 8, 8); }");
-        ui->label_output_1->setPixmap(QPixmap::fromImage(img));
-        QImage imgResize = img.scaled(ui->label_output_1->width(),ui->label_output_1->height(),Qt::KeepAspectRatio);
-        ui->label_output_1->setPixmap(QPixmap::fromImage(imgResize));
-    }
-    else if (label_output_index == 1)
-    {
-        output_2_image = mask_operation_output;
-        ui->label_output_2_image_title->setText(output_title);
-        ui->label_output_2->setStyleSheet("QLabel { background-color: rgb(215, 215, 215); border-color: rgb(8, 8, 8); }");
-        ui->label_output_2->setPixmap(QPixmap::fromImage(img));
-        QImage imgResize = img.scaled(ui->label_output_2->width(),ui->label_output_2->height(),Qt::KeepAspectRatio);
-        ui->label_output_2->setPixmap(QPixmap::fromImage(imgResize));
-    }
-    else if (label_output_index == 2)
-    {
-        output_3_image = mask_operation_output;
-        ui->label_output_3_image_title->setText(output_title);
-        ui->label_output_3->setStyleSheet("QLabel { background-color: rgb(215, 215, 215); border-color: rgb(8, 8, 8); }");
-        ui->label_output_3->setPixmap(QPixmap::fromImage(img));
-        QImage imgResize = img.scaled(ui->label_output_3->width(),ui->label_output_3->height(),Qt::KeepAspectRatio);
-        ui->label_output_3->setPixmap(QPixmap::fromImage(imgResize));
-    }
+    //show output image on assigned label and plot histogram
+    show_image_on_output_labels(spatial_mask_operation_output,output_title);
 }
 
 void MainWindow::on_MH_diff_rate_valueChanged(double arg1)
 {
     MH_diff_rate = arg1;
-    on_comboBox_mask_category_currentIndexChanged(8);
-    on_pushButton_mask_operation_clicked();
+    on_comboBox_spatial_mask_category_currentIndexChanged(8);
+    on_pushButton_spatial_mask_operation_clicked();
 }
 
 void MainWindow::on_MH_rate_valueChanged(double arg1)
 {
     MH_rate = arg1;
-    on_comboBox_mask_category_currentIndexChanged(8);
-    on_pushButton_mask_operation_clicked();
+    on_comboBox_spatial_mask_category_currentIndexChanged(8);
+    on_pushButton_spatial_mask_operation_clicked();
 }
 
 void MainWindow::on_comboBox_layers_currentIndexChanged(int index)
@@ -1759,102 +1914,143 @@ void MainWindow::on_pushButton_save_output_3_clicked()
 
 void MainWindow::on_pushButton_DFT_clicked()
 {
-    cv::Mat temp,DFT_output;
+//    qDebug()<<"dim = "<<QString::number(processed_complexImage.dims);
+    //dims = 0, not initialized; dims = 2, initialized
+
+    cv::Mat DFT_output;
     QString output_title;
     clock_t t_start, t_end;
 
     t_start = clock();
 
+//    qDebug()<<"before DFT";
+//    for(int i=0;i<gray_src.cols;i++)
+//    { qDebug()<<gray_src.at<uchar>(gray_src.rows/2,i);}
+
     complexImage = DFT(gray_src);
-    temp = enhancement_for_showing_complexImg(complexImage);
+    DFT_output = enhancement_for_showing_complexImg(complexImage);
 
     output_title += "Discrete Fourier Transform, ";
     t_end = clock();
     output_title += "run time = ";
     output_title += QString::number(t_end-t_start) +=" (ms)";
 
-    normalize(temp,DFT_output, 0, 255, CV_MINMAX,CV_8UC1);
-    plot_histogram(DFT_output);
-    QImage img;
-    img = QImage((const unsigned char*) (DFT_output.data),
-                        DFT_output.cols, DFT_output.rows, DFT_output.step, QImage::Format_Grayscale8);
-    if(label_output_index == 0)
-    {
-        output_1_image = DFT_output;
-        ui->label_output_1_image_title->setText(output_title);
-        ui->label_output_1->setStyleSheet("QLabel { background-color: rgb(215, 215, 215); border-color: rgb(8, 8, 8); }");
-        ui->label_output_1->setPixmap(QPixmap::fromImage(img));
-        QImage imgResize = img.scaled(ui->label_output_1->width(),ui->label_output_1->height(),Qt::KeepAspectRatio);
-        ui->label_output_1->setPixmap(QPixmap::fromImage(imgResize));
-    }
-    else if (label_output_index == 1)
-    {
-        output_2_image = DFT_output;
-        ui->label_output_2_image_title->setText(output_title);
-        ui->label_output_2->setStyleSheet("QLabel { background-color: rgb(215, 215, 215); border-color: rgb(8, 8, 8); }");
-        ui->label_output_2->setPixmap(QPixmap::fromImage(img));
-        QImage imgResize = img.scaled(ui->label_output_2->width(),ui->label_output_2->height(),Qt::KeepAspectRatio);
-        ui->label_output_2->setPixmap(QPixmap::fromImage(imgResize));
-    }
-    else if (label_output_index == 2)
-    {
-        output_3_image = DFT_output;
-        ui->label_output_3_image_title->setText(output_title);
-        ui->label_output_3->setStyleSheet("QLabel { background-color: rgb(215, 215, 215); border-color: rgb(8, 8, 8); }");
-        ui->label_output_3->setPixmap(QPixmap::fromImage(img));
-        QImage imgResize = img.scaled(ui->label_output_3->width(),ui->label_output_3->height(),Qt::KeepAspectRatio);
-        ui->label_output_3->setPixmap(QPixmap::fromImage(imgResize));
-    }
+    //show output image on assigned label and plot histogram
+    show_image_on_output_labels(DFT_output,output_title);
 }
 
 void MainWindow::on_pushButton_IDFT_clicked()
 {
-    cv::Mat temp,IDFT_output;
+    cv::Mat IDFT_output;
     QString output_title;
     clock_t t_start, t_end;
 
     t_start = clock();
 
-    temp = IDFT(complexImage);
+    if(processed_complexImage.dims != 2)  // dims = 2 means processed_complexImage being initialized
+    {
+        IDFT_output = IDFT(complexImage);
+        // Does not apply mask opreation , so IDFT will turn the freq_image to the origin image
+    }
+    else
+    {
+        IDFT_output = IDFT(processed_complexImage);
+    }
 
-//    cv::normalize(temp, temp, 0, 1, CV_MINMAX);
-//    cv::imshow("mag",temp);
+//    qDebug()<<"after IDFT";
+//    for(int i=0;i<IDFT_output.cols;i++)
+//    { qDebug()<<IDFT_output.at<float>(IDFT_output.rows/2,i);}
 
-    output_title += "Inverse Discrete Fourier Transform, ";
+    if(frequency_mask_mode == 6)  //need to do exp after IDFT to get processed image
+    {
+
+        cv::exp(IDFT_output, IDFT_output);
+    }
+
+    switch(frequency_mask_mode)
+    {
+        case 0: output_title += "IDFT_Ideal lowpass filter, "; break;
+        case 1: output_title += "IDFT_Ideal highpass filter, "; break;
+        case 2: output_title += "IDFT_Butterworth lowpass filter, "; break;
+        case 3: output_title += "IDFT_Butterworth highpass filter, "; break;
+        case 4: output_title += "IDFT_Gaussian lowpass filter, "; break;
+        case 5: output_title += "IDFT_Gaussian highpass filter, "; break;
+        case 6: output_title += "IDFT_Homomorphic filter, "; break;
+        default:
+            break;
+    }
     t_end = clock();
     output_title += "run time = ";
     output_title += QString::number(t_end-t_start) +=" (ms)";
 
-    normalize(temp,IDFT_output, 0, 255, CV_MINMAX,CV_8UC1);
-    plot_histogram(IDFT_output);
-    QImage img;
-    img = QImage((const unsigned char*) (IDFT_output.data),
-                        IDFT_output.cols, IDFT_output.rows, IDFT_output.step, QImage::Format_Grayscale8);
-    if(label_output_index == 0)
+    //show output image on assigned label and plot histogram
+    show_image_on_output_labels(IDFT_output,output_title);
+}
+
+void MainWindow::on_horizontalSlider_cutoff_frequency_sliderMoved(int position)
+{
+    if( cutoff_frequency != position)
     {
-        output_1_image = IDFT_output;
-        ui->label_output_1_image_title->setText(output_title);
-        ui->label_output_1->setStyleSheet("QLabel { background-color: rgb(215, 215, 215); border-color: rgb(8, 8, 8); }");
-        ui->label_output_1->setPixmap(QPixmap::fromImage(img));
-        QImage imgResize = img.scaled(ui->label_output_1->width(),ui->label_output_1->height(),Qt::KeepAspectRatio);
-        ui->label_output_1->setPixmap(QPixmap::fromImage(imgResize));
+        cutoff_frequency = position;
+        ui->spinBox_cutoff_frequency->setValue(position);
     }
-    else if (label_output_index == 1)
+    //on_pushButton_frequency_mask_operation_clicked();
+}
+
+void MainWindow::on_spinBox_cutoff_frequency_valueChanged(int arg1)
+{
+    if( cutoff_frequency != arg1)
     {
-        output_2_image = IDFT_output;
-        ui->label_output_2_image_title->setText(output_title);
-        ui->label_output_2->setStyleSheet("QLabel { background-color: rgb(215, 215, 215); border-color: rgb(8, 8, 8); }");
-        ui->label_output_2->setPixmap(QPixmap::fromImage(img));
-        QImage imgResize = img.scaled(ui->label_output_2->width(),ui->label_output_2->height(),Qt::KeepAspectRatio);
-        ui->label_output_2->setPixmap(QPixmap::fromImage(imgResize));
+        cutoff_frequency = arg1;
+        ui->horizontalSlider_cutoff_frequency->setValue(arg1);
     }
-    else if (label_output_index == 2)
+    //on_pushButton_frequency_mask_operation_clicked();
+}
+
+void MainWindow::on_comboBox_frequency_mask_category_currentIndexChanged(int index)
+{
+    frequency_mask_mode = index;
+}
+
+void MainWindow::on_pushButton_frequency_mask_operation_clicked()
+{
+    if(complexImage.dims != 2)
     {
-        output_3_image = IDFT_output;
-        ui->label_output_3_image_title->setText(output_title);
-        ui->label_output_3->setStyleSheet("QLabel { background-color: rgb(215, 215, 215); border-color: rgb(8, 8, 8); }");
-        ui->label_output_3->setPixmap(QPixmap::fromImage(img));
-        QImage imgResize = img.scaled(ui->label_output_3->width(),ui->label_output_3->height(),Qt::KeepAspectRatio);
-        ui->label_output_3->setPixmap(QPixmap::fromImage(imgResize));
+        on_pushButton_DFT_clicked(); //if DFT wasn't carried out, then do it
+        //qDebug()<<"Do DFT";
     }
+
+    cv::Mat frequency_mask_operated_output;
+    QString output_title;
+    clock_t t_start, t_end;
+
+    t_start = clock();
+    processed_complexImage = frequency_mask_operation(complexImage);
+
+    frequency_mask_operated_output = enhancement_for_showing_complexImg(processed_complexImage);
+
+    switch(frequency_mask_mode)
+    {
+        case 0: output_title += "Freq_Ideal lowpass mask, "; break;
+        case 1: output_title += "Freq_Ideal highpass mask, "; break;
+        case 2: output_title += "Freq_Butterworth lowpass mask, "; break;
+        case 3: output_title += "Freq_Butterworth highpass mask, "; break;
+        case 4: output_title += "Freq_Gaussian lowpass mask, "; break;
+        case 5: output_title += "Freq_Gaussian highpass mask, "; break;
+        case 6: output_title += "Freq_Homomorphic mask, "; break;
+        default:
+            break;
+    }
+    t_end = clock();
+    output_title += "run time = ";
+    output_title += QString::number(t_end-t_start) +=" (ms)";
+
+    //show output image on assigned label and plot histogram
+    show_image_on_output_labels(frequency_mask_operated_output,output_title);
+}
+
+void MainWindow::on_spinBox_butterworth_order_valueChanged(int arg1)
+{
+    butterworth_order = arg1;
+    on_pushButton_frequency_mask_operation_clicked();
 }
