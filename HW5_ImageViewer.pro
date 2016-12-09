@@ -9,7 +9,7 @@ QT       += charts
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-TARGET = HW3_ImageViewer
+TARGET = HW5_ImageViewer
 TEMPLATE = app
 
 

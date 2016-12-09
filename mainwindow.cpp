@@ -4,9 +4,9 @@
 // RGB to gray and show its histogram
 // basic image progressing
 //
-// Date: 2016/11/12
+// Date: 2016/12/07
 //
-// Version: 4.0
+// Version: 5.0
 //
 //**************************************************************************
 
@@ -17,13 +17,13 @@
 #include <algorithm>
 #include <math.h>
 
-
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
     on_comboBox_spatial_mask_category_currentIndexChanged(0);
+    on_comboBox_pseudo_color_type_currentIndexChanged(0);
 
 //    memset(image,25,sizeof(image));
 
@@ -31,8 +31,18 @@ MainWindow::MainWindow(QWidget *parent) :
 //    connect(clock,SIGNAL(timeout()),this,SLOT(on_pushButton_test_clicked()));
 //    clock->setInterval(1000);
 //    clock->start();
-}
 
+    colormap_gray = cv::imread("bone.png");
+    cv::cvtColor(colormap_gray, colormap_gray, CV_BGR2RGB );
+    QImage img_colormpap_gray;
+    img_colormpap_gray = QImage((const unsigned char*) (colormap_gray.data),
+                    colormap_gray.cols, colormap_gray.rows, colormap_gray.step, QImage::Format_RGB888);
+    ui->label_colormap_gray->setStyleSheet("QLabel { background-color: rgb(215, 215, 215); border-color: rgb(8, 8, 8); }");
+    ui->label_colormap_gray->setPixmap(QPixmap::fromImage(img_colormpap_gray));
+    QImage imgResize = img_colormpap_gray.scaled(ui->label_colormap_gray->width(),ui->label_colormap_gray->height(),Qt::KeepAspectRatio);
+    ui->label_colormap_gray->setPixmap(QPixmap::fromImage(imgResize));
+
+}
 MainWindow::~MainWindow()
 {
     delete ui;
@@ -78,7 +88,7 @@ void MainWindow::on_actionOpen_triggered()
                 ||file_form == "PNG"|| file_form == "bmp" || file_form == "BMP" || file_form == "tif")
         {
             src = cv::imread(filepath.toStdString().data());
-            cvtColor(src, src, 4 );  // 4 for original CV_BGR2RGB
+            cv::cvtColor(src, src, CV_BGR2RGB );  // 4 for original CV_BGR2RGB
             src_row = src.rows ;
             src_column = src.cols ;
 // ************test zone***************
@@ -102,14 +112,33 @@ void MainWindow::on_actionOpen_triggered()
 //                }
 //            }
 //*************************************
+            //***normalize src to 0~1***
+//            src_normalized.create(src.rows,src.cols,CV_32FC3);
+//            for( int i = 0; i < src.rows; i++ )
+//            {
+//                for( int j = 0; j < src.cols; j++ )
+//                {
+//                    src_normalized.at<cv::Vec3f>(i,j)[0] = (float)src.at<cv::Vec3b>(i,j)[0]/255;
+//                    src_normalized.at<cv::Vec3f>(i,j)[1] = (float)src.at<cv::Vec3b>(i,j)[1]/255;
+//                    src_normalized.at<cv::Vec3f>(i,j)[2] = (float)src.at<cv::Vec3b>(i,j)[2]/255;
+//                }
+//            }
+            //***showing the image by imshow***
+//            cv::Mat test;
+//            test.create(src.rows,src.cols,CV_32FC3);
+//            cv::cvtColor(src_normalized, test, CV_RGB2BGR );
+//            cv::imshow("src", test);
+
+
+//            for(int i=0;i<src.cols;i++){qDebug()<<src.at<cv::Vec3b>(src.rows/2,i)[0]<<", "<<src_normalized.at<cv::Vec3d>(src_normalized.rows/2,i)[0];}
 
             RGB2GRAY_2(src);
-            show_image(gray_src);
-//            cv::imshow("source",src);
+            show_image(src);
 //            cv::imshow("source2gray",gray_src);
             plot_histogram(gray_src);
             mode = 0;
             grayscale_shrink_factor =  1;
+
             t_read_show_end = clock();
             filename += ",  load time = ";
             filename += QString::number(t_read_show_end-t_read_show_start) +=" (ms),  ";
@@ -329,8 +358,29 @@ void MainWindow::RGB2GRAY_2(cv::Mat input)
     mode = 1;
 }
 
+cv::Mat MainWindow::RGB2GRAY_3(cv::Mat input)
+{
+    cv::Mat output;
+    output.create(input.rows,input.cols,CV_8UC1);
+    for(int i=0; i<input.rows; i++ )
+    {
+        for(int j=0; j<input.cols; j++ )
+        {
+            cv::Vec3b intensity = input.at<cv::Vec3b>(i, j);
+
+            uchar red = intensity.val[0];
+            uchar green = intensity.val[1];
+            uchar blue = intensity.val[2];
+            output.at<uchar>(i,j) = red*0.299 + green*0.587 + blue*0.114 ;
+//            if(i == input.rows/2){qDebug()<<red<<", "<<green<<", "<<blue<<"   "<<gray_src.at<uchar>(i,j);}
+        }
+    }
+    return output;
+}
+
 void MainWindow::GRAY2binary(cv::Mat input)
 {
+    cv::normalize(input, input, 0, 255, CV_MINMAX);
     for(int i=0; i<input.rows; i++)
     {
         for(int j=0; j<input.cols; j++)
@@ -1062,12 +1112,22 @@ cv::Mat MainWindow::IDFT(cv::Mat input)  //input complexImg for inverse fourier 
 void MainWindow::show_image_on_output_labels(cv::Mat input, QString output_title)
 {
     cv::Mat output;
-
-    cv::normalize(input,output, 0, 255, CV_MINMAX,CV_8UC1);
-    plot_histogram(output);  // plot histogram
     QImage img;
-    img = QImage((const unsigned char*) (output.data),
-                        output.cols, output.rows, output.step, QImage::Format_Grayscale8);
+    if(input.channels()==3)
+    {
+        cv::cvtColor(input,input,CV_BGR2RGB);
+        img = QImage((const unsigned char*) (input.data),
+                        input.cols, input.rows, input.step, QImage::Format_RGB888);
+    }
+    else if(input.channels()==1)
+    {
+        cv::normalize(input,output, 0, 255, CV_MINMAX,CV_8UC1);
+        plot_histogram(output);  // plot histogram
+
+        img = QImage((const unsigned char*) (input.data),
+                        input.cols, input.rows, input.step, QImage::Format_Grayscale8);
+    }
+
     if(label_output_index == 0)
     {
         output_1_image = output;
@@ -1236,6 +1296,403 @@ cv::Mat MainWindow::frequency_mask_operation(cv::Mat input)  // input complexImg
     cv::merge(planes, 2, output);
 
     return output;
+}
+
+cv::Mat MainWindow::color_mode_conversion(cv::Mat input)
+{
+    // both input and output are CV_8UC3 (0~255, 3 channels)
+    cv::Mat output;
+
+    output.create(input.rows, input.cols, CV_8UC3);
+
+    double R, G, B;
+
+    switch(color_mode[1]) //next color mode
+    {
+        case 0:  // to RGB
+        {
+            switch(color_mode[0]) //previous color mode
+            {
+                case 0:  //RGB to RGB
+                {
+                    for(int i=0;i<input.rows;i++)
+                    {
+                        for(int j=0;j<input.cols;j++)
+                        {
+                            output.at<cv::Vec3b>(i,j)[0] =  input.at<cv::Vec3b>(i,j)[0];
+                            output.at<cv::Vec3b>(i,j)[1] =  input.at<cv::Vec3b>(i,j)[1];
+                            output.at<cv::Vec3b>(i,j)[2] =  input.at<cv::Vec3b>(i,j)[2];
+                        }
+                    }
+                    break;
+                }
+                case 1:  //CMY to RGB
+                    for(int i=0;i<input.rows;i++)
+                    {
+                        for(int j=0;j<input.cols;j++)
+                        {
+                            output.at<cv::Vec3b>(i,j)[0] = 255 - input.at<cv::Vec3b>(i,j)[0];
+                            output.at<cv::Vec3b>(i,j)[1] = 255 - input.at<cv::Vec3b>(i,j)[1];
+                            output.at<cv::Vec3b>(i,j)[2] = 255 - input.at<cv::Vec3b>(i,j)[2];
+                        }
+                    }
+                    break;
+                case 2: //HSI to RGB
+                {
+                    for(int i=0;i<input.rows;i++)
+                    {
+                        for(int j=0;j<input.cols;j++)
+                        {
+                            double H, S, I;
+                            //normalize H to 0~360, S & I to 0~1
+                            H = input.at<cv::Vec3b>(i,j)[0]/255.0 * 360;
+                            S = input.at<cv::Vec3b>(i,j)[1]/255.0;
+                            I = input.at<cv::Vec3b>(i,j)[2]/255.0;
+
+//                            qDebug()<<"H="<<H<<" ,S="<<S<<" ,I="<<I;
+
+                            double R, G ,B;
+                            if(0<=H && H<120)
+                            {
+                                B = I*(1-S);
+                                R = I*(1 + (S*cos(H/180*M_PI))/(cos((60-H)/180*M_PI)));
+                                G = 3*I - (R + B);
+                            }
+                            else if(120<=H && H<240)
+                            {
+                                H = H - 120;
+                                R = I*(1-S);
+                                G = I*(1 + (S*cos(H/180*M_PI))/(cos((60-H)/180*M_PI)));
+                                B = 3*I - (R + G);
+                            }
+                            else // 240<=H && H<360
+                            {
+                                H = H - 240;
+                                G = I*(1-S);
+                                B = I*(1 + (S*cos(H/180*M_PI))/(cos((60-H)/180*M_PI)));
+                                R = 3*I - (G + B);
+                            }
+                            output.at<cv::Vec3b>(i,j)[0] = (R * 255);
+                            output.at<cv::Vec3b>(i,j)[1] = (G * 255);
+                            output.at<cv::Vec3b>(i,j)[2] = (B * 255);
+                        }
+                    }
+                    break;
+                }
+                case 3:  // XYZ to RGB
+                {
+                    cv::cvtColor(input, output, CV_XYZ2RGB );
+                    break;
+                }
+                case 4:  // L*a*b* to RGB
+                {
+                    cv::cvtColor(input, output, CV_Lab2RGB );
+                    break;
+                }
+                case 5:  // YUV to RGB
+                {
+                    cv::cvtColor(input, output, CV_YUV2RGB );
+                    break;
+                }
+                default:
+                    break;
+            }
+            break;
+        }
+        case 1:  // to CMY
+        {
+            switch(color_mode[0]) //previous color mode
+            {
+                case 0: // from RGB to CMY
+                {
+                    for(int i=0;i<input.rows;i++)
+                    {
+                        for(int j=0;j<input.cols;j++)
+                        {
+//                            output.at<cv::Vec3b>(i,j) = cv::Vec3b(255,255,255) - input.at<cv::Vec3b>(i,j);
+                            output.at<cv::Vec3b>(i,j)[0] = 255 - input.at<cv::Vec3b>(i,j)[0];
+                            output.at<cv::Vec3b>(i,j)[1] = 255 - input.at<cv::Vec3b>(i,j)[1];
+                            output.at<cv::Vec3b>(i,j)[2] = 255 - input.at<cv::Vec3b>(i,j)[2];
+                        }
+                    }
+                    break;
+                }
+                default:
+                    break;
+
+            }
+            break;
+        }
+        case 2:  // to HSI
+        {
+            switch(color_mode[0]) //previous color mode
+            {
+                case 0:  //from RGB to HSI
+                {
+                    double min;
+                    for (int i=0;i<input.rows;i++)
+                    {
+                         for (int j=0;j<input.cols;j++)
+                         {
+                            R = input.at<cv::Vec3b>(i,j)[0]/255.0;
+                            G = input.at<cv::Vec3b>(i,j)[1]/255.0;
+                            B = input.at<cv::Vec3b>(i,j)[2]/255.0;
+                            min=0;
+                            //*** I ***  0~1 normalize to 0~255
+                            output.at<cv::Vec3b>(i,j)[2]=(R+G+B)/3 *255;
+
+                            //*** S ***  0~1 normalize to 0~255
+                            // find the minimun value among RGB
+                            if(R<G) {min=R;}
+                            else    {min=G;}
+
+                            if(B<min){min=B;}
+
+                            if ((R+G+B)>0)
+                            {output.at<cv::Vec3b>(i,j)[1]=(1-3*min/(R+G+B)) * 255;}
+                            else if((R+G+B)==0)
+                            {output.at<cv::Vec3b>(i,j)[1] = 0.0;}
+
+                            //*** H ***  0~360 normalize to 0~255
+                            if(G>=B) // H = theta
+                            {output.at<cv::Vec3b>(i,j)[0] =
+                                        (acos((R-G*0.5-B*0.5)/sqrt(pow(R,2)+pow(G,2)+pow(B,2)-R*G-R*B-B*G))/(2*M_PI)*360)/360*255;}
+                            else //H = 360 - theta
+                            {output.at<cv::Vec3b>(i,j)[0] =
+                                        (360-(acos((R-G*0.5-B*0.5)/sqrt(pow(R,2)+pow(G,2)+pow(B,2)-R*G-R*B-B*G))/(2*M_PI)*360))/360*255;}
+        //                    output.at<cv::Vec3b>(i,j)[0] = output.at<cv::Vec3b>(i,j)[0]/360.0*255;
+
+                            //***test***
+//                            if(sqrt(pow(R,2)+pow(G,2)+pow(B,2)-R*G-R*B-B*G) ==0){qDebug()<<(R-G*0.5-B*0.5)<<", "<<output.at<cv::Vec3b>(i,j)[0];}
+                         }
+                    }
+                    break;
+                }
+                default:
+                    break;
+            }
+
+            break;
+        }
+        case 3:  // RGB to XYZ
+        {
+            cv::cvtColor(input, output, CV_RGB2XYZ );
+//            for (int i=0;i<input.rows;i++)
+//            {
+//                 for (int j=0;j<input.cols;j++)
+//                 {
+//                    R = input.at<cv::Vec3b>(i,j)[0];
+//                    G = input.at<cv::Vec3b>(i,j)[1];
+//                    B = input.at<cv::Vec3b>(i,j)[2];
+//                    output.at<cv::Vec3b>(i,j)[0] = 0.412453*R + 0.357580*G + 0.180423*B;
+//                    output.at<cv::Vec3b>(i,j)[1] = 0.212671*R + 0.715160*G + 0.072169*B;
+//                    output.at<cv::Vec3b>(i,j)[2] = 0.019334*R + 0.119193*G + 0.950227*B;
+//                 }
+//            }
+            break;
+        }
+        case 4:  // RGB to L*a*b*
+        {
+            cv::cvtColor(input, output, CV_RGB2Lab );
+            break;
+        }
+        case 5:  // RGB to YUV
+        {
+            cv::cvtColor(input, output, CV_RGB2YUV );
+            break;
+        }
+
+        default:
+            break;
+    }
+    // color_mode[0]:current color mode; color_mode[1]:next color mode;
+    // color_mode[0] = color_mode[1];
+
+    return output;
+}
+
+void MainWindow::show_image_with_splitted_channels(cv::Mat input, QString output_title)
+{
+    //input matrix must have 3 channel and be normalized to 0~1
+    cv::Mat planes[3];
+//    cv::Mat planes[] = {cv::Mat_<uchar>(input), cv::Mat_<uchar>(input),cv::Mat_<uchar>(input)};
+    cv::split(input,planes);
+
+//    cv::Mat test;
+//    test.create(input.rows,input.cols,CV_8UC1);
+//    cv::imshow("plane", planes[1]);
+    //*****test zone*****
+//    if(color_mode[1]==5)
+//    {
+//        cv::Mat test;
+//        cv::cvtColor(input,test, CV_YUV2BGR);
+//        cv::imshow("test",test);
+//    }
+    //***test*****
+    cv::Mat output;
+    output.create(input.rows,input.cols,CV_8UC1);
+
+
+
+//    qDebug()<<input.rows<<","<<input.cols<<"  "<<planes[1].rows<<","<<planes[1].cols;
+
+    for(int i=0;i<3;i++)
+    {
+        output = planes[i];
+//        for( int j = 0; j < input.rows; j++ )
+//        {
+//            for( int k = 0; k < input.cols; k++ )
+//            {
+//                output.at<uchar>(j,k) = cvRound(planes[i].at<float>(j,k)*255);
+//            }
+//        }
+
+//        cv::normalize(planes[i],output,0,255,CV_MINMAX);
+
+        QImage img;
+        img = QImage((const unsigned char*) (output.data),
+                        output.cols, output.rows, output.step, QImage::Format_Grayscale8);
+
+        QString str;
+        if(i == 0)
+        {
+            output_1_image = planes[i];
+            str = ", plane_1";
+            ui->label_output_1_image_title->setText(output_title + str);
+            ui->label_output_1->setStyleSheet("QLabel { background-color: rgb(215, 215, 215); border-color: rgb(8, 8, 8); }");
+            ui->label_output_1->setPixmap(QPixmap::fromImage(img));
+            QImage imgResize = img.scaled(ui->label_output_1->width(),ui->label_output_1->height(),Qt::KeepAspectRatio);
+            ui->label_output_1->setPixmap(QPixmap::fromImage(imgResize));
+        }
+        else if (i == 1)
+        {
+//            cv::imshow("nor_plane", planes[1]);
+            output_2_image = planes[i];
+            str = ", plane_2";
+            ui->label_output_2_image_title->setText(output_title + str);
+            ui->label_output_2->setStyleSheet("QLabel { background-color: rgb(215, 215, 215); border-color: rgb(8, 8, 8); }");
+            ui->label_output_2->setPixmap(QPixmap::fromImage(img));
+            QImage imgResize = img.scaled(ui->label_output_2->width(),ui->label_output_2->height(),Qt::KeepAspectRatio);
+            ui->label_output_2->setPixmap(QPixmap::fromImage(imgResize));
+        }
+        else if (i == 2)
+        {
+            output_3_image = planes[i];
+            str = ", plane_3";
+            ui->label_output_3_image_title->setText(output_title + str);
+            ui->label_output_3->setStyleSheet("QLabel { background-color: rgb(215, 215, 215); border-color: rgb(8, 8, 8); }");
+            ui->label_output_3->setPixmap(QPixmap::fromImage(img));
+            QImage imgResize = img.scaled(ui->label_output_3->width(),ui->label_output_3->height(),Qt::KeepAspectRatio);
+            ui->label_output_3->setPixmap(QPixmap::fromImage(imgResize));
+        }
+    }
+}
+
+cv::Mat MainWindow::gray_to_pseudo_color(cv::Mat input)
+{
+    cv::Mat normalized_input, output;
+
+    // use upper and lower bound to choose what color range should be present
+    // project 0~255 to the assigned color range
+    cv::normalize(input, normalized_input, pseudo_color_low, pseudo_color_high, CV_MINMAX);
+
+    switch(colormap_index)
+    {
+        case 0: cv::applyColorMap(normalized_input, output, cv::COLORMAP_JET);break;
+        case 1: cv::applyColorMap(normalized_input, output, cv::COLORMAP_RAINBOW);break;
+        case 2: cv::applyColorMap(normalized_input, output, cv::COLORMAP_HOT);break;
+        case 3: cv::applyColorMap(normalized_input, output, cv::COLORMAP_PARULA);break;
+        case 4:  // user defined
+        {
+            output.create(input.rows, input.cols, CV_8UC3);
+            for (int i=0;i<input.rows;i++)
+            {
+                 for (int j=0;j<input.cols;j++)
+                 {
+                      uchar Value = input.at<uchar>(i,j);
+                      if(Value <= pseudo_color_seperate[0]){
+                      output.at<cv::Vec3b>(i,j)[0]=0;
+                      output.at<cv::Vec3b>(i,j)[1]=0;
+                      output.at<cv::Vec3b>(i,j)[2]=0;
+                      }
+                      else if(Value <= pseudo_color_seperate[1]){
+                      output.at<cv::Vec3b>(i,j)[0]=0;
+                      output.at<cv::Vec3b>(i,j)[1]=0;
+                      output.at<cv::Vec3b>(i,j)[2]=255;
+                      }
+//                      else if(Value <= 90){
+//                      output.at<cv::Vec3b>(i,j)[0]=0;
+//                      output.at<cv::Vec3b>(i,j)[1]=255;
+//                      output.at<cv::Vec3b>(i,j)[2]=255;
+//                      }
+                      else if(Value <= pseudo_color_seperate[2]){
+                      output.at<cv::Vec3b>(i,j)[0]=0;
+                      output.at<cv::Vec3b>(i,j)[1]=255;
+                      output.at<cv::Vec3b>(i,j)[2]=0;
+                      }
+//                      else if(Value <= 160){
+//                      output.at<cv::Vec3b>(i,j)[0]=255;
+//                      output.at<cv::Vec3b>(i,j)[1]=255;
+//                      output.at<cv::Vec3b>(i,j)[2]=0;
+//                      }
+                      else if(Value <= pseudo_color_seperate[3]){
+                      output.at<cv::Vec3b>(i,j)[0]=255;
+                      output.at<cv::Vec3b>(i,j)[1]=0;
+                      output.at<cv::Vec3b>(i,j)[2]=0;
+                      }
+//                      else if(Value <= 240){
+//                      output.at<cv::Vec3b>(i,j)[0]=255;
+//                      output.at<cv::Vec3b>(i,j)[1]=0;
+//                      output.at<cv::Vec3b>(i,j)[2]=255;
+//                      }
+                      else{
+                      output.at<cv::Vec3b>(i,j)[0]=255;
+                      output.at<cv::Vec3b>(i,j)[1]=255;
+                      output.at<cv::Vec3b>(i,j)[2]=255;
+                      }
+                 }
+            }
+            break;
+        }
+        default:
+            break;
+    }
+//    for(int i=0;i<input.cols;i++){qDebug()<<input.at<cv::Vec3b>(output.rows/2,i)[0]<<","<< output.at<cv::Vec3b>(input.rows/2,i)[1];}
+    return output;
+}
+
+cv::Mat MainWindow::Kmeans_color_segmentation(cv::Mat input, int cluster_count)
+{
+    int attempts = 6;
+    cv::Mat labels, centers ;
+
+    //***step 1 : map 3 channel matrix into vectos, where each vector is a voxel (ri,gi,bi)***
+    cv::Mat samples(input.rows * input.cols, 3, CV_32F);
+    for( int y = 0; y < input.rows; y++ ){
+        for( int x = 0; x < input.cols; x++ ){
+            for( int z = 0; z < 3; z++){
+                samples.at<float>(y + x*input.rows, z) = input.at<cv::Vec3b>(y,x)[z];
+            }
+        }
+    }
+
+    //***step 2 : find the centers and labels using Kmeanns ***
+    cv::kmeans(samples, cluster_count, labels,
+               cv::TermCriteria(CV_TERMCRIT_ITER | CV_TERMCRIT_EPS, 10, 0.01),
+                   attempts, cv::KMEANS_PP_CENTERS, centers);
+
+    //***step 3 : process the output ***
+    cv::Mat new_image( input.size(), input.type() );
+    for( int y = 0; y < input.rows; y++ )
+      for( int x = 0; x < input.cols; x++ )
+      {
+        int cluster_idx = labels.at<int>(y + x*src.rows,0);
+        new_image.at<cv::Vec3b>(y,x)[0] = centers.at<float>(cluster_idx, 0);
+        new_image.at<cv::Vec3b>(y,x)[1] = centers.at<float>(cluster_idx, 1);
+        new_image.at<cv::Vec3b>(y,x)[2] = centers.at<float>(cluster_idx, 2);
+      }
+    cv::cvtColor(new_image,new_image,CV_BGR2RGB);
+    return new_image;
 }
 
 //********** Buttons ************
@@ -1987,7 +2444,7 @@ void MainWindow::on_pushButton_IDFT_clicked()
     show_image_on_output_labels(IDFT_output,output_title);
 }
 
-void MainWindow::on_horizontalSlider_cutoff_frequency_sliderMoved(int position)
+void MainWindow::on_horizontalSlider_cutoff_frequency_valueChanged(int position)
 {
     if( cutoff_frequency != position)
     {
@@ -2053,4 +2510,271 @@ void MainWindow::on_spinBox_butterworth_order_valueChanged(int arg1)
 {
     butterworth_order = arg1;
     on_pushButton_frequency_mask_operation_clicked();
+}
+
+void MainWindow::on_pushButton_color_model_conversion_clicked()
+{
+    QString output_title;
+    clock_t t_start, t_end;
+
+    t_start = clock();
+
+    color_mode_conversion_output = color_mode_conversion(src);
+
+//    cv::imshow("color_mode_conversion_output",color_mode_conversion_output);
+
+    switch(color_mode[1])
+    {
+        case 0: output_title += "RGB_mode, "; break;
+        case 1: output_title += "CMY_mode, "; break;
+        case 2: output_title += "HSI_mode, "; break;
+        case 3: output_title += "XYZ_mode, "; break;
+        case 4: output_title += "L*a*b*_mode, "; break;
+        case 5: output_title += "YUV_mode, "; break;
+        default:
+            break;
+    }
+    t_end = clock();
+    output_title += "run time = ";
+    output_title += QString::number(t_end-t_start) +=" (ms)";
+
+    if(color_mode_conversion_index == 0)
+    {
+        //show output image on three labels
+        show_image_with_splitted_channels(color_mode_conversion_output,output_title);
+    }
+    else if(color_mode_conversion_index == 1)
+    {
+        cvtColor(color_mode_conversion_output, color_mode_conversion_output, CV_BGR2RGB);
+        show_image_on_output_labels(color_mode_conversion_output,output_title);
+    }
+
+}
+
+void MainWindow::on_comboBox_color_model_currentIndexChanged(int index)
+{
+    color_mode[1] = index;
+}
+
+void MainWindow::on_comboBox_pseudo_color_type_currentIndexChanged(int index)
+{
+    colormap_index = index;
+    cv::Mat colormap;
+    if( 0 <= colormap_index && colormap_index <= 3)
+    {
+        ui->PC21->hide();
+        ui->PC22->hide();
+        ui->PC23->hide();
+        ui->PC24->hide();
+        ui->horizontalSlider_pseudo_color_low->show();
+        ui->horizontalSlider_pseudo_color_high->show();
+        ui->spinBox_pseudo_color_low->show();
+        ui->spinBox_pseudo_color_high->show();
+
+        switch(colormap_index)
+        {
+            case 0: colormap = cv::imread("jet.png");break;
+            case 1: colormap = cv::imread("rainbow.png");break;
+            case 2: colormap = cv::imread("hot.png");break;
+            case 3: colormap = cv::imread("parula.png");break;
+            default:
+                break;
+        }
+        cv::cvtColor(colormap, colormap, CV_BGR2RGB );
+    }
+    else
+    {
+        ui->horizontalSlider_pseudo_color_low->hide();
+        ui->horizontalSlider_pseudo_color_high->hide();
+        ui->spinBox_pseudo_color_low->hide();
+        ui->spinBox_pseudo_color_high->hide();
+        ui->PC21->show(); ui->PC21->setText("50");
+        ui->PC22->show(); ui->PC22->setText("100");
+        ui->PC23->show(); ui->PC23->setText("150");
+        ui->PC24->show(); ui->PC24->setText("200");
+
+        cv::Mat test;
+        test.create(src.rows, src.cols, CV_8UC1);
+        test = RGB2GRAY_3(colormap_gray);
+        colormap = gray_to_pseudo_color(test);
+        cv::cvtColor(colormap, colormap, CV_BGR2RGB );
+    }
+        // use colormap_gray to calculate corresponding color map
+        QImage img_colormpap;
+        img_colormpap = QImage((const unsigned char*) (colormap.data),
+                        colormap.cols, colormap.rows, colormap.step, QImage::Format_RGB888);
+        ui->label_colormap->setStyleSheet("QLabel { background-color: rgb(215, 215, 215); border-color: rgb(8, 8, 8); }");
+        ui->label_colormap->setPixmap(QPixmap::fromImage(img_colormpap));
+        QImage imgResize = img_colormpap.scaled(ui->label_colormap->width(),ui->label_colormap->height(),Qt::KeepAspectRatio);
+        ui->label_colormap->setPixmap(QPixmap::fromImage(imgResize));
+
+//    on_pushButton_Pseudo_color_conversion_clicked();
+}
+
+void MainWindow::on_pushButton_Pseudo_color_conversion_clicked()
+{
+    cv::Mat output;
+    QString output_title;
+    clock_t t_start, t_end;
+
+    t_start = clock();
+
+//    cv::imshow("pseudo color",output);
+
+    switch(colormap_index)
+    {
+        case 0: output_title += "Pseudo Color_jet, "; break;
+        case 1: output_title += "Pseudo Color_rainbow, "; break;
+        case 2: output_title += "Pseudo Color_hot, "; break;
+        case 3: output_title += "Pseudo Color_parula, "; break;
+        case 4:
+        {
+            output_title += "Pseudo Color_user defined, ";
+            pseudo_color_seperate[0] = ui->PC21->text().toInt();
+            pseudo_color_seperate[1] = ui->PC22->text().toInt();
+            pseudo_color_seperate[2] = ui->PC23->text().toInt();
+            pseudo_color_seperate[3] = ui->PC24->text().toInt();
+            break;
+        }
+        default:
+            break;
+    }
+
+    output = gray_to_pseudo_color(gray_src);
+
+    // use colormap_gray to calculate corresponding color map
+    cv::Mat colormap, test;
+    test.create(src.rows, src.cols, CV_8UC1);
+    test = RGB2GRAY_3(colormap_gray);
+    colormap = gray_to_pseudo_color(test);
+    cv::cvtColor(colormap, colormap, CV_BGR2RGB );
+    QImage img_colormpap;
+    img_colormpap = QImage((const unsigned char*) (colormap.data),
+                    colormap.cols, colormap.rows, colormap.step, QImage::Format_RGB888);
+    ui->label_colormap->setStyleSheet("QLabel { background-color: rgb(215, 215, 215); border-color: rgb(8, 8, 8); }");
+    ui->label_colormap->setPixmap(QPixmap::fromImage(img_colormpap));
+    QImage imgResize = img_colormpap.scaled(ui->label_colormap->width(),ui->label_colormap->height(),Qt::KeepAspectRatio);
+    ui->label_colormap->setPixmap(QPixmap::fromImage(imgResize));
+
+    t_end = clock();
+    output_title += "run time = ";
+    output_title += QString::number(t_end-t_start) +=" (ms)";
+    show_image_on_output_labels(output, output_title);
+}
+
+void MainWindow::on_horizontalSlider_pseudo_color_low_valueChanged(int value)
+{
+    if( pseudo_color_low != value)
+    {
+        pseudo_color_low = value;
+        ui->spinBox_pseudo_color_low->setValue(value);
+    }
+    on_pushButton_Pseudo_color_conversion_clicked();
+}
+
+void MainWindow::on_horizontalSlider_pseudo_color_high_valueChanged(int value)
+{
+    if( pseudo_color_high != value)
+    {
+        pseudo_color_high = value;
+        ui->spinBox_pseudo_color_high->setValue(value);
+    }
+    on_pushButton_Pseudo_color_conversion_clicked();
+}
+
+void MainWindow::on_spinBox_pseudo_color_low_valueChanged(int arg1)
+{
+    if( pseudo_color_low != arg1)
+    {
+        pseudo_color_low = arg1;
+        ui->horizontalSlider_pseudo_color_low->setValue(arg1);
+    }
+    on_pushButton_Pseudo_color_conversion_clicked();
+}
+
+void MainWindow::on_spinBox_pseudo_color_high_valueChanged(int arg1)
+{
+    if( pseudo_color_high != arg1)
+    {
+        pseudo_color_high = arg1;
+        ui->horizontalSlider_pseudo_color_high->setValue(arg1);
+    }
+    on_pushButton_Pseudo_color_conversion_clicked();
+}
+
+void MainWindow::on_pushButton_color_segmentation_clicked()
+{
+//    cv::Mat output;
+    QString output_title;
+    clock_t t_start, t_end;
+
+    t_start = clock();
+
+    color_mode_conversion_output = color_mode_conversion(src);
+    color_mode_conversion_output = Kmeans_color_segmentation(color_mode_conversion_output, k_kmeans_cluster_count);
+
+    switch(color_mode[1])
+    {
+        case 0: output_title += "RGB_k-means, "; break;
+        case 1: output_title += "CMY_k-means, "; break;
+        case 2: output_title += "HSI_k-means, "; break;
+        case 3: output_title += "XYZ_k-means, "; break;
+        case 4: output_title += "L*a*b*_k-means, "; break;
+        case 5: output_title += "YUV_k-means, "; break;
+        default:
+            break;
+    }
+    output_title += "k = "; output_title += QString::number(k_kmeans_cluster_count);
+    t_end = clock();
+    output_title += ", run time = ";
+    output_title += QString::number(t_end-t_start) +=" (ms)";
+
+    //show output image on assigned label
+    show_image_on_output_labels(color_mode_conversion_output, output_title);
+
+}
+
+void MainWindow::on_spinBox_k_for_kmeans_valueChanged(int arg1)
+{
+    k_kmeans_cluster_count = arg1;
+}
+
+void MainWindow::on_pushButton_convert_to_RGB_clicked()
+{
+    QString output_title;
+    clock_t t_start, t_end;
+    t_start = clock();
+
+    int temp = color_mode[1];
+    color_mode[1] = 0;
+    color_mode[0] = temp;
+
+    cv::Mat output_RGB;
+
+    switch(color_mode[0])
+    {
+        case 0: output_title += "RGB to RGB, "; break;
+        case 1: output_title += "CMY to RGB, "; break;
+        case 2: output_title += "HSI to RGB, "; break;
+        case 3: output_title += "XYZ to RGB, "; break;
+        case 4: output_title += "L*a*b* to RGB, "; break;
+        case 5: output_title += "YUV to RGB, "; break;
+        default:
+            break;
+    }
+
+    t_end = clock();
+    output_title += ", run time = ";
+    output_title += QString::number(t_end-t_start) +=" (ms)";
+
+    output_RGB = color_mode_conversion(color_mode_conversion_output);
+    cv::cvtColor(output_RGB,output_RGB,CV_RGB2BGR);
+    color_mode[0] = 0;
+    ui->comboBox_color_model->setCurrentIndex(0);
+    show_image_on_output_labels(output_RGB, output_title);
+}
+
+void MainWindow::on_comboBox_color_mode_conversion_index_currentIndexChanged(int index)
+{
+    color_mode_conversion_index = index;
 }

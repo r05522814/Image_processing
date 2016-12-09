@@ -39,6 +39,7 @@ public:
 
     int histogram[256];            // Array to store the histogram of the image (32 gray scales)
     cv::Mat src;
+    cv::Mat src_normalized;
     cv::Mat gray_src;
     cv::Mat output_1_image;
     cv::Mat output_2_image;
@@ -46,6 +47,10 @@ public:
 
     cv::Mat complexImage;
     cv::Mat processed_complexImage;
+
+    cv::Mat colormap_gray;
+
+    cv::Mat color_mode_conversion_output;
 
     double mask_3[3][3];
     double mask_5[5][5];
@@ -56,6 +61,11 @@ public:
     bool resize_image_to_label = false ;
     double mean_and_sigma_square[2]={0};
     int frequency_mask_mode = 0 ;
+    int color_mode[2] = {0,0};  // color_mode[0]:current color mode; color_mode[1]:next color mode;
+    int colormap_index = 0;  //select type of colormap for grayscale transformation
+    int pseudo_color_low = 0;
+    int pseudo_color_high = 255;  // 0~255 normalize to pseudo_color_low~pseudo_color_high
+    int color_mode_conversion_index = 0; //0 means showing 3 splitted color planes; 1 means showing merged image
 
     //***parameters***
     int threshold_value = 128;  //binary threshold
@@ -68,6 +78,8 @@ public:
     int butterworth_order = 1; // frequency domian butterworth_order(n)
     double homomorphic_Gamma_H = 2.0;
     double homomorphic_Gamma_L = 0.25;
+    int pseudo_color_seperate[4] = {50,100,150,200};
+    int k_kmeans_cluster_count = 2;
 
     //QTimer *clock;
 
@@ -78,6 +90,7 @@ private slots:
 
     void on_actionAbout_triggered();
 
+    //***** functions *****
     void show_image(cv::Mat input);
 
     void plot_histogram(cv::Mat src);
@@ -90,6 +103,7 @@ private slots:
 
     void RGB2GRAY_1(cv::Mat src);
     void RGB2GRAY_2(cv::Mat src);
+    cv::Mat RGB2GRAY_3(cv::Mat input);
 
     void GRAY2binary(cv::Mat input);
 
@@ -122,6 +136,15 @@ private slots:
 
     cv::Mat frequency_mask_operation(cv::Mat input);
 
+    cv::Mat color_mode_conversion(cv::Mat input);
+
+    void show_image_with_splitted_channels(cv::Mat input, QString output_title);
+
+    cv::Mat gray_to_pseudo_color(cv::Mat input);
+
+    cv::Mat Kmeans_color_segmentation(cv::Mat input, int cluster_count);
+
+    //***** user interface *****
     void on_pushButton_add_constant_clicked();
     void on_pushButton_subtract_constant_clicked();
     void on_brightness_factor_valueChanged(int arg1);
@@ -164,7 +187,7 @@ private slots:
     void on_pushButton_DFT_clicked();
     void on_pushButton_IDFT_clicked();
 
-    void on_horizontalSlider_cutoff_frequency_sliderMoved(int position);
+    void on_horizontalSlider_cutoff_frequency_valueChanged(int position);
     void on_spinBox_cutoff_frequency_valueChanged(int arg1);
 
     void on_comboBox_frequency_mask_category_currentIndexChanged(int index);
@@ -172,6 +195,30 @@ private slots:
     void on_pushButton_frequency_mask_operation_clicked();
 
     void on_spinBox_butterworth_order_valueChanged(int arg1);
+
+    void on_pushButton_color_model_conversion_clicked();
+
+    void on_comboBox_color_model_currentIndexChanged(int index);
+
+    void on_comboBox_pseudo_color_type_currentIndexChanged(int index);
+
+    void on_pushButton_Pseudo_color_conversion_clicked();
+
+    void on_horizontalSlider_pseudo_color_low_valueChanged(int value);
+
+    void on_horizontalSlider_pseudo_color_high_valueChanged(int value);
+
+    void on_spinBox_pseudo_color_low_valueChanged(int arg1);
+
+    void on_spinBox_pseudo_color_high_valueChanged(int arg1);
+
+    void on_pushButton_color_segmentation_clicked();
+
+    void on_spinBox_k_for_kmeans_valueChanged(int arg1);
+
+    void on_pushButton_convert_to_RGB_clicked();
+
+    void on_comboBox_color_mode_conversion_index_currentIndexChanged(int index);
 
 private:
     Ui::MainWindow *ui;
